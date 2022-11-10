@@ -19,18 +19,18 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The didFF R package assesses when the validity of difference-in-differences and related estimators depends on functional form, based on the theoretical results in [Roth and Sant’Anna (2022)](https://jonathandroth.github.io/assets/files/2010.04814.pdf). This package provides a test for whether parallel trends is insensitive to functional form by estimating the implied density of potential outcomes under the null and checking if it is significantly below zero at some point.
+The `didFF` R package assesses when the validity of difference-in-differences and related estimators depends on functional form, based on the theoretical results in [Roth and Sant’Anna (2022)](https://jonathandroth.github.io/assets/files/2010.04814.pdf). This package provides a test for whether parallel trends is insensitive to functional form by estimating the implied density of potential outcomes under the null and checking if it is significantly below zero at some point.
 
 ## Installation
 
 You can install the development version of didFF from [GitHub](https://github.com/) with:
 
 ``` r
-#Install the devtools package if not already installed
-# install.packages("devtools")
+#Install the remotes package if not already installed
+# install.packages("remotes")
 
-#Install the didFF package using devtools
-devtools::install_github("amenabrown/didFF")
+#Install the didFF package using remotes
+remotes::install_github("pedrohcgs/didFF")
 ```
 
 ## Example

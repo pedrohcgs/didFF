@@ -3,22 +3,20 @@ Title: Test if Parallel Trends is Sensitive to Functional Form
 Version: 0.0.0.9000
 Authors@R: 
     person("Jon", "Roth", , "jonathndr@gmail.com", role = c("aut", "cre"))
-Description: Estimates the implied density under the null-hypothesis that paralell trends assumptions for DID estimations is not sensitive to functional form of the outcome.
+Description: Difference-in-Differences (DiD) estimators rely on the validity of a parallel trends assumption. In practice, it often may not be clear from theory that parallel trends should hold for a particular choice of functional form. For example, a researcher may be interested in the average treatment effect on the treated (ATT) in levels for a particular policy, but it may not be obvious that the variation in the policy generates parallel trends specifically in levels rather than in logs or some other transformation. This package contains tools for assessing if parallel trends is insensitive to functional form using the methods developed in Roth and Sant'Anna (2022) <https://www.econometricsociety.org/system/files/19402-3.pdf>.  The package accommodates setups with multiple time periods, variation in treatment timing, and allow for covariates. We provide estimates, plots, and p-values for the implied density of the untreated potential outcomes under the null-hypothesis that paralell trends assumptions is not sensitive to functional form of the outcome. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Imports: 
     dplyr,
     ggplot2,
     ggthemes,
-    glue,
     grid,
     magrittr,
     MASS,
-    purrr,
-    tidyr
+    did (>= 2.1.2)
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5)
 LazyData: true
-LazyDataCompression:xz
+LazyDataCompression: xz

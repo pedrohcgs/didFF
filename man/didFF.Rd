@@ -5,72 +5,137 @@
 \title{Test if Parallel trends assumption is sensitive to functional form}
 \usage{
 didFF(
-  DF = NULL,
-  idvar = "id",
-  yvar = "output",
-  tvar = "timevar",
-  treatmentvar = "treatment group",
-  weight = NULL,
-  nbins = NULL,
-  nboots = 1000,
+  data,
+  yname,
+  tname,
+  idname,
+  gname,
+  weightsname = NULL,
+  clustervars = NULL,
+  est_method = "dr",
+  xformla = NULL,
+  panel = TRUE,
+  allow_unbalanced_panel = FALSE,
+  control_group = c("nevertreated", "notyettreated"),
+  anticipation = 0,
+  nbins = 100,
+  numSims = 1e+05,
   seed = 0,
-  start_t = NULL,
-  end_t = NULL,
   lb_graph = NULL,
-  ub_graph = NULL
+  ub_graph = NULL,
+  aggte_type = "simple",
+  balance_e = NULL,
+  min_e = -Inf,
+  max_e = Inf,
+  pl = FALSE,
+  cores = 1
 )
 }
 \arguments{
-\item{DF}{data.frame object}
+\item{data}{The name of the data.frame that contains the data}
 
-\item{idvar}{Name variable indicating group or id in DF}
+\item{yname}{The name of the outcome variable}
 
-\item{yvar}{Name of Outcome variable in DF}
+\item{tname}{The name of the column containing the time periods}
 
-\item{tvar}{Name Time variable in DF}
+\item{idname}{The individual (cross-sectional unit) id name}
 
-\item{treatmentvar}{Name of Binary variable in df indicating treatment/control group}
+\item{gname}{The name of the variable in \code{data} that
+contains the first period when a particular observation is treated.
+This should be a positive number for all observations in treated groups.
+It defines which "group" a unit belongs to.  It can be 0 for units
+in the ``never-treated'' group.}
 
-\item{weight}{Name weighting variable. Default is NULL}
+\item{weightsname}{The name of the column containing the sampling weights.
+If not set, all observations have same weight (Default is NULL).}
 
-\item{nbins}{A scalar indicating the Number of bins for the support of Outcome. Default nbins=100}
+\item{clustervars}{A vector of variables names to cluster on.  At most, there
+can be two variables (otherwise will throw an error) and one of these
+must be the same as idname which allows for clustering at the individual
+level. By default, we cluster at individual level.}
 
-\item{nboots}{Number of bootstrap samples for iDensityTest. Default nboots=1000}
+\item{est_method}{the method to compute group-time average treatment effects.
+The default is "dr" which uses the doubly robust
+approach in the \code{DRDID} package.  Other built-in methods
+include "ipw" for inverse probability weighting and "reg" for
+first step regression estimators.}
+
+\item{xformla}{A formula for the covariates to include in the
+model.  It should be of the form \code{~ X1 + X2}.  Default
+is NULL which is equivalent to \code{xformla=~1}.  This is
+used to create a matrix of covariates which is then passed
+to the 2x2 DID estimator chosen in \code{est_method}.}
+
+\item{panel}{Whether or not the data is a panel dataset.
+The panel dataset should be provided in long format -- that
+is, where each row corresponds to a unit observed at a
+particular point in time.  The default is TRUE.
+When \code{panel=FALSE}, the data is treated
+as repeated cross sections.}
+
+\item{allow_unbalanced_panel}{Whether or not function should
+"balance" the panel with respect to time and id.  The default
+values if \code{FALSE} which means that \code{\link[=att_gt]{att_gt()}} will drop
+all units where data is not observed in all periods.
+The advantage of this is that the computations are faster
+(sometimes substantially).}
+
+\item{control_group}{Which units to use the control group.
+The default is \code{control_group = "nevertreated"}, which sets the control group
+to be the group of units that never participate in the
+treatment.  This group does not change across groups or
+time periods.  The other option is to set
+\code{control_group="notyettreated"}.  In this case, the control group
+is set to the group of units that have not yet participated
+in the treatment in that time period.  This includes all
+never treated units, but it includes additional units that
+eventually participate in the treatment, but have not
+participated yet.}
+
+\item{anticipation}{The number of time periods before participating
+in the treatment where units can anticipate participating in the
+treatment and therefore it can affect their untreated potential outcomes}
+
+\item{nbins}{A scalar indicating the (maximum) number of bins for the support of outcome.
+Default \code{nbins=100}. Empty bins are dropped.}
+
+\item{numSims}{Number of simulation draws to compute p-value for moment inequality
+test. Default \code{numSims=100000}.}
 
 \item{seed}{Starting seed for iDensityTest. Default is seed=0, set seed=NULL for random seed.}
-
-\item{start_t}{The Baseline period for DID. Default min(tvar)}
-
-\item{end_t}{The follow up period for DID. Default max(tvar)}
 
 \item{lb_graph}{Minimun outcome-bin for density estimation. Default lb_graph=NULL}
 
 \item{ub_graph}{Maximun outcome-bin for density estimation. Default ub_graph=NULL}
+
+\item{aggte_type}{Which type of (scalar) aggregated treatment effect parameter to compute.
+Options are "simple", "dynamic", "group", and "calendar". Default is \code{simple}.}
+
+\item{balance_e}{If set (and if \code{aggte_type = "dynamic"}), it balances
+the sample with respect to event time.  For example, if \code{balance.e=2},
+it will drop groups that are not exposed to treatment for
+at least three periods. (the initial period when \code{e=0} as well as the
+next two periods when \code{e=1} and the \code{e=2}).  This ensures that
+the composition of groups does not change when event time changes.}
+
+\item{min_e}{For \code{aggte_type = "dynamic"}, this is the smallest event time to compute
+dynamic effects for.  By default, \code{min_e = -Inf} so that effects at
+all feasible event times are computed.}
+
+\item{max_e}{For \code{aggte_type = "dynamic"}, this is the largest event time to compute
+dynamic effects for.  By default, \code{max_e = Inf} so that effects at
+all lfeasible event times are computed.}
+
+\item{pl}{Whether or not to use parallel processing. Default is FALSE.}
+
+\item{cores}{The number of cores to use for parallel processing.
+Only relevant if \code{pl = TRUE}.Default is \code{cores = 1}.}
 }
 \value{
-A list object "list(plot,table,pval)" containing the plot of the implied density under the null, a table with the estimated and implied densities, and the pval for H0= Implied Density>0.
+A list object containing the plot of the
+implied density under the null, a table with the estimated and
+implied densities, and the p-value for H0= Implied Density>=0.
 }
 \description{
 Test if Parallel trends assumption is sensitive to functional form
-}
-\examples{
-set.seed(99)
-N=10000
-treat<-rbinom(N,1,0.25)
-wage<-rlnorm(N, 13, 2)
-id<-as.character(seq(1:N))
-t0<-replicate(N,2010)
-t1<-replicate(N,2020)
-y0<-wage+rnorm(N,0,100)
-y1<- y0 + 20*treat + rnorm(N,0,100)
-panel_id=c(paste(id,t0,sep="_"),paste(id,t1,sep="_"))
-year<-c(t0,t1)
-y<-c(y0,y1)
-D<-c(treat,treat)
-treated<-c(replicate(N,0),treat)
-ID<-c(id,id)
-df<-data.frame(panel_id,ID,year,y,D,treated)
-df<-df\%>\%
-dplyr::filter((0 <= y) & (y <= 500000))
-didFF(df,"ID","y","year","treated", nbins=100)
 }
