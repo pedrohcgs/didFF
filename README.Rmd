@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+
 ```
 
 # didFF
@@ -42,7 +43,11 @@ We now provide and example of how to use the package using the empirical illustr
 We first load the package and the data.
 
 ```{r example}
-library(didFF) #load the TestFunctional Form package
+# Load didFF and other auxiliary libraries for data manipulation
+library(didFF) #load the didFF package
+library(tidyverse) 
+library(dplyr)
+
 mw_df<-didFF::mw_df #load Cengiz et al. (2019) data frame
 ```
 
@@ -54,21 +59,35 @@ head(mw_df, 5)
 
 ## Testing Functional Form for DiD between 2007 and 2015
 
-We will now test whether a DiD analysis for the effect of the minimum wage on wages (weighted by population) is insensitive to functional form -- i.e. that parallel trends is valid regardless of whether wages are measured in levels, logs, percentiles, etc. We first consider an analysis where the pre-treatment period is 2007, the post-treatment period is 2015, and the treatment is whether a state raised its minimum wage at any point between the pre-treatment and post-treatment periods. (By default, didFF considers a unit to be treated in a given window if it is treated at any point between the provided start and end years.) We call didFF as follows:
+We will now test whether a DiD analysis for the effect of the minimum wage on wages (weighted by population) is insensitive to functional form -- i.e. that parallel trends is valid regardless of whether wages are measured in levels, logs, percentiles, etc. We first consider an analysis where the pre-treatment period is 2007, the post-treatment period is 2015, and the treatment is whether a state raised its minimum wage at any point between the pre-treatment and post-treatment periods. We call didFF as follows:
 
 ```{r 2007-2015}
-test_2007_2015<-didFF(
-  DF=mw_df,
-  idvar="statenum", #panel id is state 
-  yvar="wage",  #outcome is wage
-  tvar="year", #time period is year
-  treatmentvar = "treated", #treatment indicator
-  weight = "pop", #weight by population in each bin
-  start_t=2007, #pre-treatment year 
-  end_t=2015,  #post-treatment year
-  lb_graph=5, 
-  ub_graph=29.99
+# Create treatment groups according to the description above
+start_t = 2007 #pre-treatment year 
+end_t = 2015  #post-treatment year
+
+# Create dataset
+mw_df_2007_2015 <- 
+  mw_df %>%
+  dplyr::filter((start_t <= year) & (year <= end_t)) %>% # filter out data outside the time window of interest
+  dplyr::group_by(statenum) %>%
+  dplyr::mutate(group = max(treated > 0)*2015) %>% # Create group variable that take value end_t if state was ever treated in this period, and 0 otherwise
+  dplyr::filter((year == start_t) | (year == end_t)) %>%#filter data back to pre and post periods only
+  dplyr::group_by(statenum, wage) %>%
+  dplyr::mutate(state_bin_id = cur_group_id() )
+
+# Run the test
+test_2007_2015 <- didFF(
+  data = mw_df_2007_2015,
+  yname = "wage",
+  tname = "year",
+  idname = "state_bin_id",
+  gname = "group",
+  weightsname = "pop",
+  clustervars = "statenum",
+  est_method = "reg"
 )
+
 test_2007_2015$plot
 ```
 
