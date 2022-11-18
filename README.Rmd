@@ -85,7 +85,9 @@ test_2007_2015 <- didFF(
   gname = "group",
   weightsname = "pop",
   clustervars = "statenum",
-  est_method = "reg"
+  est_method = "reg",
+  lb_graph = 5,
+  ub_graph = 29.99
 )
 
 test_2007_2015$plot
