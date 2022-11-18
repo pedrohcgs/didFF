@@ -172,7 +172,6 @@ didFF <-function(
   #----------------------------------------------------------------------------
   # Do the same but when y_already_discretized == TRUE
   if(y_already_discretized == TRUE){
-
     #----------------------------------------------------------------------------
     # get ready for looping
     unique_level <- base::sort(base::unique(DF[[yname]]))
@@ -198,21 +197,21 @@ didFF <-function(
       DF$outcome_bin
     )
 
-    DF_binned <- DF
+    #DF_binned <- DF
 
-    if(y_already_discretized == TRUE){
-      if(is.null(weightsname)) {
-        w <- 1
-      } else {
-        w <- DF[[weightsname]]
-      }
-
-      DF_binned <- DF %>%
-        group_by(idname, tname, outcome_bin)  %>%
-        summarise()
-
-
-    }
+    # if(y_already_discretized == TRUE){
+    #   if(is.null(weightsname)) {
+    #     w <- 1
+    #   } else {
+    #     w <- DF[[weightsname]]
+    #   }
+    #
+    #   DF_binned <- DF %>%
+    #     group_by(idname, tname, outcome_bin)  %>%
+    #     summarise()
+    #
+    #
+    # }
 
     out_bins <- base::suppressMessages(
       did::att_gt(
@@ -225,6 +224,7 @@ didFF <-function(
         xformla = xformla,
         est_method = est_method,
         clustervars = clustervars,
+        weightsname = weightsname,
         panel = panel,
         allow_unbalanced_panel = allow_unbalanced_panel,
         anticipation = anticipation,
@@ -234,8 +234,7 @@ didFF <-function(
       )
     )
 
-    out_bins$
-      aggt_param <- base::suppressMessages(
+    aggt_param <- base::suppressMessages(
         did::aggte(out_bins,
                    type = aggte_type,
                    na.rm = TRUE,
