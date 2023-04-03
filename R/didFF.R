@@ -7,12 +7,8 @@
 #' @param gname The name of the variable in `data` that
 #'  contains the first period when a particular observation is treated.
 #'  This should be a positive number for all observations in treated groups.
-#'  It defines which "group" a unit belongs to.  It can be 0 for units
+#'  It defines which "group" a unit belongs to.  It can be `0`  or `Inf` for units
 #'  in the ``never-treated'' group.
-#' @param y_already_discretized Whether the outcome of interest is already
-#' discretized. Defaults is `FALSE`. If `y_already_discretized = TRUE`,
-#' the variable `gname` should contain all the discretized values of the outcome,
-#' for each time period and each cross-sectional id.
 #' @param weightsname The name of the column containing the sampling weights.
 #'  If not set, all observations have same weight (Default is NULL).
 #' @param clustervars A vector of variables names to cluster on.  At most, there
@@ -93,7 +89,6 @@ didFF <-function(
     tname,
     idname,
     gname,
-    y_already_discretized = FALSE,
     weightsname = NULL,
     clustervars = NULL,
     est_method = "dr",
@@ -143,43 +138,34 @@ didFF <-function(
                               DF[[gname]])
   #----------------------------------------------------------------------------
   # Form bins (regardless of treatment group)
-  if(y_already_discretized == FALSE){
-    # First do some sanity checks
-    if((base::is.null(nbins) | (nbins < 2))) {
-      stop("Must provide nbins at least equal to 2")
-    }
-    #  Build the bins
-    bin <- base::as.numeric(base::cut(DF[[yname]],
-                                      breaks = nbins,
-                                      include.lowest = TRUE,
-                                      labels =FALSE))
 
-    level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]",
-                                            "\\1",
-                                            base::cut(
-                                              DF[[yname]],
-                                              breaks = nbins,
-                                              include.lowest = TRUE
-                                            )
-    ) )
-    #----------------------------------------------------------------------------
-    # get ready for looping
-    unique_bin <- base::sort(base::unique(bin))
-    unique_level <- base::sort(base::unique(level_bin))
-    n_unique_bin <- base::length(unique_bin)
-    n_ids <- base::length(base::unique(DF[[idname]]))
+  # First do some sanity checks
+  if((base::is.null(nbins) | (nbins < 2))) {
+    stop("Must provide nbins at least equal to 2")
   }
+  #  Build the bins
+  bin <- base::as.numeric(base::cut(DF[[yname]],
+                                    breaks = nbins,
+                                    include.lowest = TRUE,
+                                    labels =FALSE))
+
+  level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]",
+                                          "\\1",
+                                          base::cut(
+                                            DF[[yname]],
+                                            breaks = nbins,
+                                            include.lowest = TRUE
+                                          )
+  ) )
   #----------------------------------------------------------------------------
-  # Do the same but when y_already_discretized == TRUE
-  if(y_already_discretized == TRUE){
-    #----------------------------------------------------------------------------
-    # get ready for looping
-    unique_level <- base::sort(base::unique(DF[[yname]]))
-    n_unique_bin <- base::length(unique_level)
-    n_ids <- base::length(base::unique(DF[[idname]]))
-    bin <- DF[[yname]]
-    unique_bin <- unique_level
-  }
+  # get ready for looping
+  unique_bin <- base::sort(base::unique(bin))
+  unique_level <- base::sort(base::unique(level_bin))
+  n_unique_bin <- base::length(unique_bin)
+  n_ids <- base::length(base::unique(DF[[idname]]))
+
+  #----------------------------------------------------------------------------
+
   #----------------------------------------------------------------------------
   # Initialize matrix of influence functions
   unc_inf_function <- base::matrix(NA,
@@ -197,21 +183,6 @@ didFF <-function(
       DF$outcome_bin
     )
 
-    #DF_binned <- DF
-
-    # if(y_already_discretized == TRUE){
-    #   if(is.null(weightsname)) {
-    #     w <- 1
-    #   } else {
-    #     w <- DF[[weightsname]]
-    #   }
-    #
-    #   DF_binned <- DF %>%
-    #     group_by(idname, tname, outcome_bin)  %>%
-    #     summarise()
-    #
-    #
-    # }
 
     out_bins <- base::suppressMessages(
       did::att_gt(
@@ -235,34 +206,34 @@ didFF <-function(
     )
 
     aggt_param <- base::suppressMessages(
-        did::aggte(out_bins,
-                   type = aggte_type,
-                   na.rm = TRUE,
-                   cband = FALSE,
-                   bstrap = TRUE,
-                   clustervars = clustervars,
-                   balance_e = NULL,
-                   min_e = -Inf,
-                   max_e = Inf
-        )
+      did::aggte(out_bins,
+                 type = aggte_type,
+                 na.rm = TRUE,
+                 cband = FALSE,
+                 bstrap = TRUE,
+                 clustervars = clustervars,
+                 balance_e = NULL,
+                 min_e = -Inf,
+                 max_e = Inf
       )
+    )
 
 
-        if(aggte_type=="simple"){
-          unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$simple.att
-        }
+    if(aggte_type=="simple"){
+      unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$simple.att
+    }
 
-        if(aggte_type=="group"){
-          unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$selective.inf.func
-        }
+    if(aggte_type=="group"){
+      unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$selective.inf.func
+    }
 
-        if(aggte_type=="dynamic"){
-          unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$dynamic.inf.func
-        }
+    if(aggte_type=="dynamic"){
+      unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$dynamic.inf.func
+    }
 
-        if(aggte_type=="calendar"){
-          unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$calendar.inf.func
-        }
+    if(aggte_type=="calendar"){
+      unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$calendar.inf.func
+    }
   }
   #----------------------------------------------------------------------------
   # Drop collinear bins (only for testing purposes)
