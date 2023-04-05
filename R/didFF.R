@@ -175,6 +175,13 @@ didFF <-function(
   point_estimates <- base::rep(NA, times = n_unique_bin)
 
   DF$outcome_bin <- NA
+
+  # Ensure never treated is coded as Inf
+  DF[[gname]] <- base::ifelse(
+    DF[[gname]]==0,
+    Inf,
+    DF[[gname]]
+  )
   #----------------------------------------------------------------------------
   # Compute aggte from did package using each bin as outcome
   for (j in 1:n_unique_bin){
