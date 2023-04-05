@@ -252,6 +252,7 @@ didFF <-function(
   # Do the drops and adjust the other variables
   inf_function <- inf_function[,keep_IF]
   unique_bin <- unique_bin[keep_IF]
+  unique_level_orig <- unique_level
   unique_level <- unique_level[keep_IF]
   n_unique_bin <- base::length(unique_bin)
   #----------------------------------------------------------------------------
@@ -259,11 +260,7 @@ didFF <-function(
   implied_density <- point_estimates[keep_IF]
 
   #Asymptotic Variance-covariance matrix
-  AsyVar <- base::crossprod(inf_function -
-                              base::matrix(base::rep(implied_density, n_ids),
-                                           ncol = n_unique_bin,
-                                           nrow = n_ids,
-                                           byrow = TRUE))/n_ids
+  AsyVar <- base::crossprod(inf_function)/n_ids
 
   # Scale it to account for root-n in AsyVar
   Sigmahat <- (AsyVar/n_ids)
@@ -271,8 +268,8 @@ didFF <-function(
   # get the implied density table
   level = NULL
   implied_density_table <- base::data.frame(
-    level = unique_level,
-    implied_density = implied_density
+    level = unique_level_orig,
+    implied_density = point_estimates
   )
   #----------------------------------------------------------------------------
   # Prepare data for plots
