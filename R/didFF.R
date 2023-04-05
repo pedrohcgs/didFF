@@ -3,18 +3,18 @@
 #' @param data The name of the data.frame that contains the data
 #' @param yname The name of the outcome variable
 #' @param tname The name of the column containing the time periods
-#' @param idname The individual (cross-sectional unit) id name
+#' @param idname The cross-sectional unit id name
 #' @param gname The name of the variable in `data` that
 #'  contains the first period when a particular observation is treated.
 #'  This should be a positive number for all observations in treated groups.
 #'  It defines which "group" a unit belongs to.  It can be `0`  or `Inf` for units
 #'  in the ``never-treated'' group.
 #' @param weightsname The name of the column containing the sampling weights.
-#'  If not set, all observations have same weight (Default is NULL).
-#' @param clustervars A vector of variables names to cluster on.  At most, there
-#'  can be two variables (otherwise will throw an error) and one of these
-#'  must be the same as idname which allows for clustering at the individual
-#'  level. By default, we cluster at individual level.
+#'  If not set, all observations have the same weight (Default is NULL).
+# @param clustervars A vector of variables names to cluster on.  At most, there
+#  can be two variables (otherwise will throw an error) and one of these
+#  must be the same as idname which allows for clustering at the unit
+#  level. By default, we cluster at unit level.
 #' @param est_method the method to compute group-time average treatment effects.
 #'  The default is "dr" which uses the doubly robust
 #' approach in the `DRDID` package.  Other built-in methods
@@ -90,7 +90,7 @@ didFF <-function(
     idname,
     gname,
     weightsname = NULL,
-    clustervars = NULL,
+    #clustervars = NULL,
     est_method = "dr",
     xformla = NULL,
     panel = TRUE,
@@ -168,9 +168,11 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Initialize matrix of influence functions
-  unc_inf_function <- base::matrix(NA,
+  inf_function <- base::matrix(NA,
                                    nrow = n_ids,
                                    ncol = n_unique_bin)
+
+  point_estimates <- base::rep(NA, times = n_unique_bin)
 
   DF$outcome_bin <- NA
   #----------------------------------------------------------------------------
@@ -194,7 +196,7 @@ didFF <-function(
         control_group = control_group,
         xformla = xformla,
         est_method = est_method,
-        clustervars = clustervars,
+        clustervars = NULL,
         weightsname = weightsname,
         panel = panel,
         allow_unbalanced_panel = allow_unbalanced_panel,
@@ -210,49 +212,54 @@ didFF <-function(
                  type = aggte_type,
                  na.rm = TRUE,
                  cband = FALSE,
-                 bstrap = TRUE,
-                 clustervars = clustervars,
-                 balance_e = NULL,
-                 min_e = -Inf,
-                 max_e = Inf
+                 bstrap = FALSE,
+                 clustervars = NULL,
+                 balance_e = balance_e,
+                 min_e = min_e,
+                 max_e = max_e
       )
     )
 
 
     if(aggte_type=="simple"){
-      unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$simple.att
+
+      inf_function[,j] <-  aggt_param$inf.function$simple.att
     }
 
     if(aggte_type=="group"){
-      unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$selective.inf.func
+      point_estimates[j] <- aggt_param$overall.att
+      inf_function[,j] <-   aggt_param$inf.function$selective.inf.func
     }
 
     if(aggte_type=="dynamic"){
-      unc_inf_function[,j] <-  aggt_param$overall.att + aggt_param$inf.function$dynamic.inf.func
+      point_estimates[j] <- aggt_param$overall.att
+      inf_function[,j] <-  aggt_param$inf.function$dynamic.inf.func
     }
 
     if(aggte_type=="calendar"){
-      unc_inf_function[,j] <- aggt_param$overall.att + aggt_param$inf.function$calendar.inf.func
+      point_estimates[j] <- aggt_param$overall.att
+      inf_function[,j] <-  aggt_param$inf.function$calendar.inf.func
     }
   }
   #----------------------------------------------------------------------------
-  # Drop collinear bins (only for testing purposes)
-  qr.IF <-  base::qr(unc_inf_function,
+  # Drop collinear bins (only for hypothesis testing purposes)
+  qr.IF <-  base::qr(inf_function,
                      tol=1e-6,
                      LAPACK = FALSE)
   rnk_IF <- qr.IF$rank
   keep_IF <- qr.IF$pivot[seq_len(rnk_IF)]
 
   # Do the drops and adjust the other variables
-  unc_inf_function <- unc_inf_function[,keep_IF]
+  inf_function <- inf_function[,keep_IF]
   unique_bin <- unique_bin[keep_IF]
   unique_level <- unique_level[keep_IF]
   n_unique_bin <- base::length(unique_bin)
   #----------------------------------------------------------------------------
   # Compute the implied pdf for each bin
-  implied_density <- base::colMeans(unc_inf_function)
+  implied_density <- point_estimates[keep_IF]
+
   #Asymptotic Variance-covariance matrix
-  AsyVar <- base::crossprod(unc_inf_function -
+  AsyVar <- base::crossprod(inf_function -
                               base::matrix(base::rep(implied_density, n_ids),
                                            ncol = n_unique_bin,
                                            nrow = n_ids,
@@ -330,7 +337,7 @@ didFF <-function(
   }
   set.seed(s)
 
-  muhat_test <- - implied_density
+  muhat_test <- -implied_density
   sims <- MASS::mvrnorm(n = numSims,
                         mu = 0*muhat_test,
                         Sigma = Cormat
