@@ -11,19 +11,16 @@ didFF(
   idname,
   gname,
   weightsname = NULL,
-  clustervars = NULL,
   est_method = "dr",
   xformla = NULL,
   panel = TRUE,
   allow_unbalanced_panel = FALSE,
   control_group = c("nevertreated", "notyettreated"),
   anticipation = 0,
-  nbins = 100,
+  nbins = 20,
   numSims = 1e+05,
   seed = 0,
-  lb_graph = NULL,
-  ub_graph = NULL,
-  aggte_type = "simple",
+  aggte_type = "group",
   balance_e = NULL,
   min_e = -Inf,
   max_e = Inf,
@@ -38,21 +35,16 @@ didFF(
 
 \item{tname}{The name of the column containing the time periods}
 
-\item{idname}{The individual (cross-sectional unit) id name}
+\item{idname}{The cross-sectional unit id name}
 
 \item{gname}{The name of the variable in \code{data} that
 contains the first period when a particular observation is treated.
 This should be a positive number for all observations in treated groups.
-It defines which "group" a unit belongs to.  It can be 0 for units
+It defines which "group" a unit belongs to.  It can be \code{0}  or \code{Inf} for units
 in the ``never-treated'' group.}
 
 \item{weightsname}{The name of the column containing the sampling weights.
-If not set, all observations have same weight (Default is NULL).}
-
-\item{clustervars}{A vector of variables names to cluster on.  At most, there
-can be two variables (otherwise will throw an error) and one of these
-must be the same as idname which allows for clustering at the individual
-level. By default, we cluster at individual level.}
+If not set, all observations have the same weight (Default is NULL).}
 
 \item{est_method}{the method to compute group-time average treatment effects.
 The default is "dr" which uses the doubly robust
@@ -97,19 +89,15 @@ in the treatment where units can anticipate participating in the
 treatment and therefore it can affect their untreated potential outcomes}
 
 \item{nbins}{A scalar indicating the (maximum) number of bins for the support of outcome.
-Default \code{nbins=100}. Empty bins are dropped.}
+Default \code{nbins=20}. Empty bins are dropped.}
 
 \item{numSims}{Number of simulation draws to compute p-value for moment inequality
 test. Default \code{numSims=100000}.}
 
-\item{seed}{Starting seed for iDensityTest. Default is seed=0, set seed=NULL for random seed.}
-
-\item{lb_graph}{Minimun outcome-bin for density estimation. Default lb_graph=NULL}
-
-\item{ub_graph}{Maximun outcome-bin for density estimation. Default ub_graph=NULL}
+\item{seed}{Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.}
 
 \item{aggte_type}{Which type of (scalar) aggregated treatment effect parameter to compute.
-Options are "simple", "dynamic", "group", and "calendar". Default is \code{simple}.}
+Options are "simple", "dynamic", "group", and "calendar". Default is \code{group}.}
 
 \item{balance_e}{If set (and if \code{aggte_type = "dynamic"}), it balances
 the sample with respect to event time.  For example, if \code{balance.e=2},

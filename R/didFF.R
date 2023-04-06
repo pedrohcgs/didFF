@@ -52,12 +52,10 @@
 #'  in the treatment where units can anticipate participating in the
 #'  treatment and therefore it can affect their untreated potential outcomes
 #' @param nbins A scalar indicating the (maximum) number of bins for the support of outcome.
-#' Default `nbins=100`. Empty bins are dropped.
+#' Default `nbins=20`. Empty bins are dropped.
 #' @param numSims Number of simulation draws to compute p-value for moment inequality
 #' test. Default `numSims=100000`.
-#' @param seed Starting seed for iDensityTest. Default is seed=0, set seed=NULL for random seed.
-#' @param lb_graph Minimun outcome-bin for density estimation. Default lb_graph=NULL
-#' @param ub_graph Maximun outcome-bin for density estimation. Default ub_graph=NULL
+#' @param seed Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.
 #' @param aggte_type Which type of (scalar) aggregated treatment effect parameter to compute.
 #' Options are "simple", "dynamic", "group", and "calendar". Default is `group`.
 #' @param balance_e If set (and if `aggte_type = "dynamic"`), it balances
@@ -81,8 +79,6 @@
 #' @export
 #'
 
-
-
 didFF <-function(
     data,
     yname,
@@ -97,11 +93,11 @@ didFF <-function(
     allow_unbalanced_panel = FALSE,
     control_group = c("nevertreated","notyettreated"),
     anticipation = 0,
-    nbins = 100,
+    nbins = 20,
     numSims = 100000,
     seed = 0,
-    lb_graph = NULL,
-    ub_graph = NULL,
+    #lb_graph = NULL,
+    #ub_graph = NULL,
     aggte_type = "group",
     balance_e = NULL,
     min_e = -Inf,
@@ -149,6 +145,11 @@ didFF <-function(
                                     include.lowest = TRUE,
                                     labels =FALSE))
 
+  bin2 <- base::levels(base::droplevels(base::cut(data_filtered[[yname]],
+                                                  breaks = nbins,
+                                                  include.lowest = TRUE,
+                                                  labels = NULL)))
+
   level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]",
                                           "\\1",
                                           base::cut(
@@ -162,15 +163,18 @@ didFF <-function(
   unique_bin <- base::sort(base::unique(bin))
   unique_level <- base::sort(base::unique(level_bin))
   n_unique_bin <- base::length(unique_bin)
+  # Number of ids in the data
   n_ids <- base::length(base::unique(DF[[idname]]))
+  # We adjust this later for case of unbalanced panel and RCS
+  # bc for these case, we do not use all ids (as we set some outcomes to 0)
 
   #----------------------------------------------------------------------------
 
   #----------------------------------------------------------------------------
   # Initialize matrix of influence functions
   inf_function <- base::matrix(NA,
-                                   nrow = n_ids,
-                                   ncol = n_unique_bin)
+                               nrow = n_ids,
+                               ncol = n_unique_bin)
 
   point_estimates <- base::rep(NA, times = n_unique_bin)
 
@@ -194,25 +198,28 @@ didFF <-function(
 
 
     out_bins <- base::suppressMessages(
-      did::att_gt(
-        yname = "outcome_bin",
-        gname = gname,
-        idname = idname,
-        tname = tname,
-        data = DF,
-        control_group = control_group,
-        xformla = xformla,
-        est_method = est_method,
-        clustervars = NULL,
-        weightsname = weightsname,
-        panel = panel,
-        allow_unbalanced_panel = allow_unbalanced_panel,
-        anticipation = anticipation,
-        bstrap = FALSE,
-        cband = FALSE,
-        base_period = "universal"
+      base::suppressWarnings(
+        did::att_gt(
+          yname = "outcome_bin",
+          gname = gname,
+          idname = idname,
+          tname = tname,
+          data = DF,
+          control_group = control_group,
+          xformla = xformla,
+          est_method = est_method,
+          clustervars = NULL,
+          weightsname = weightsname,
+          panel = panel,
+          allow_unbalanced_panel = allow_unbalanced_panel,
+          anticipation = anticipation,
+          bstrap = FALSE,
+          cband = FALSE,
+          base_period = "universal"
+        )
       )
     )
+
 
     aggt_param <- base::suppressMessages(
       did::aggte(out_bins,
@@ -229,7 +236,7 @@ didFF <-function(
 
 
     if(aggte_type=="simple"){
-
+      point_estimates[j] <- aggt_param$overall.att
       inf_function[,j] <-  aggt_param$inf.function$simple.att
     }
 
@@ -262,44 +269,47 @@ didFF <-function(
   unique_level_orig <- unique_level
   unique_level <- unique_level[keep_IF]
   n_unique_bin <- base::length(unique_bin)
+
+  # Drop all columns with all 0's (id was not used in the test)
+  inf_function2 <- inf_function[rowSums(abs(inf_function[]))>1e-10,]
+  n_ids_eff <- nrow(inf_function2)
+
   #----------------------------------------------------------------------------
   # Compute the implied pdf for each bin
   implied_density <- point_estimates[keep_IF]
 
   #Asymptotic Variance-covariance matrix
-  AsyVar <- base::crossprod(inf_function)/n_ids
+  AsyVar <- base::crossprod(inf_function)/n_ids_eff
 
   # Scale it to account for root-n in AsyVar
-  Sigmahat <- (AsyVar/n_ids)
+  Sigmahat <- (AsyVar/n_ids_eff)
   #----------------------------------------------------------------------------
   # get the implied density table
   level = NULL
   implied_density_table <- base::data.frame(
     level = unique_level_orig,
+    #level = bin2,
     implied_density = point_estimates
   )
   #----------------------------------------------------------------------------
   # Prepare data for plots
-  if(base::is.null(lb_graph)){
-    lb_graph <- base::min(implied_density_table$level)
-  }
+  lb_graph <- base::min(unique_level_orig)
+  ub_graph <- base::max(unique_level_orig)
 
-  if(is.null(ub_graph)){
-    ub_graph <- base::max(implied_density_table$level)
-  }
   Outcome = NULL
 
   plotTable <- implied_density_table %>%
-    dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
+    #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
     dplyr::mutate(Outcome = level) %>%
     dplyr::mutate(
-      c = base::ifelse(implied_density < 0,
-                       "Negative",
-                       "Non-negative"))
-  `Implied Density` <- NULL
+      `Implied Density` = base::ifelse(implied_density < 0,
+                                       "Negative",
+                                       "Non-negative"))
+  #`Implied Density` <- NULL
   basic_plot<- plotTable %>%
     ggplot2::ggplot(ggplot2::aes(x=Outcome,
                                  y = implied_density,
+                                 # fill = c)) +
                                  fill = `Implied Density`)) +
     ggplot2::geom_bar(stat = "identity") +
     ggplot2::xlab("Outcome") +
@@ -352,35 +362,10 @@ didFF <-function(
   p_value <- mean( sims_max >= max(muhat_test/sqrt(diag(Sigmahat))) )
 
 
-  #rpval <- round(p_value,3)
-
-  #H0_text = list("H[0]: 'Implied Density' >= 0")
-
-  # if(p_value < 0.01){
-  #   pval_text= list("p-value <0.01")
-  # } else{
-  #   pval_text=list(paste("p-value =",rpval))
-  # }
-
-
-  #
-  #   plot <- implied_density_plot +
-  #     ggplot2::annotate(geom = 'text',
-  #                       x = base::mean(plotTable$level)+
-  #                         stats::sd(plotTable$implied_density),
-  #                       y = base::max(plotTable$implied_density),
-  #                       label = H0_text, parse=TRUE,
-  #                       hjust = 0) +
-  #     ggplot2::annotate(geom = 'text',
-  #                       x = base::mean(plotTable$level)+
-  #                         stats::sd(implied_density_table$implied_density),
-  #                       y = base::max(plotTable$implied_density)-
-  #                         stats::sd(plotTable$implied_density)/3,
-  #                       label = pval_text,
-  #                       hjust = 0) +
-  #     ggplot2::xlab(yvar)
-
   plot <- implied_density_plot
+
+  # To have the outcome interval in the table of implied density
+  implied_density_table$level <- bin2
 
   didFF_out <- list(
     plot = plot,

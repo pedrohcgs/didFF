@@ -1,15 +1,21 @@
-#' Dataset on minimum wages and employement, derived from Cengiz et. al (2019)#'
+#'  County Teen Employment Dataset
 
-#' A dataset containing yearly U.S. wage density and minimun wage by state between years 1979 and 2016
+#'  A dataset containing (the log of) teen employment in 500 counties
+#'  in the U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway and
+#'  Sant'Anna (2021).  See that paper for additional descriptions.
 #'
-#' @format A data frame with 228684 rows and 5 variables:
+#' @format A data frame with 2500 rows and 5 variables:
 #' \describe{
-#'   \item{statenum}{state id}
-#'   \item{year}{year}
-#'   \item{wage}{wage (rounded down to nearest 25c, and 0 if NILF)}
-#'   \item{treated}{whether a state had a MW change in the given year, using the definition in Cengiz et al}
-#'   \item{pop}{Total employment at wagebin-state level (averaged over four quarters in the year)}
-#'   ...
+#'   \item{year}{the year of the observation}
+#'   \item{countyreal}{a unique identifier for a particular county}
+#'   \item{lpop}{the log of 1000s of population for the county}
+#'   \item{lemp}{the log of teen employment in the county}
+#'   \item{first.treat}{the year that the state where the county is located
+#'    raised its minimum wage, it is set equal to 0 for counties that have
+#'    minimum wages equal to the federal minimum wage over the entire
+#'    period.}
+#'   \item{treat}{whether or not a particular county is treated in that year}
 #' }
-#' @source Derived from \url{https://doi.org/10.1093/qje/qjz014}
+#' @source Callaway and Sant'Anna (2021)
 "mw_df"
+
