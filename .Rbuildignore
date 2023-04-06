@@ -1,4 +1,3 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-R/build_data_from_replication_files.R
 R/line_by_line_checks.R
