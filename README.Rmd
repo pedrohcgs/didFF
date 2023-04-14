@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 # didFF
 
 <!-- badges: start -->
-
+![Unit and build tests](https://github.com/pedrohcgs/didFF/actions/workflows/tests.yml/badge.svg)
 <!-- badges: end -->
 
 The `didFF` R package assesses when the validity of difference-in-differences and related estimators depends on functional form, based on the theoretical results in [Roth and Sant’Anna (2022)](https://jonathandroth.github.io/assets/files/2010.04814.pdf). This package provides a test for whether parallel trends is insensitive to functional form by estimating the implied density of potential outcomes under the null and checking if it is significantly below zero at some point.
@@ -66,7 +66,7 @@ We will now test whether a DiD analysis for the effect of the minimum wage on wa
 start_t = 2007 #pre-treatment year 
 end_t = 2015  #post-treatment year
 
-# Create dataset
+# Create dataset (not run)
 mw_df_2007_2015 <- 
   mw_df %>%
   dplyr::filter((start_t <= year) & (year <= end_t)) %>% # filter out data outside the time window of interest
@@ -76,7 +76,7 @@ mw_df_2007_2015 <-
   dplyr::group_by(statenum, wage) %>%
   dplyr::mutate(state_bin_id = cur_group_id() )
 
-# Run the test
+# Run the test (not run)
 test_2007_2015 <- didFF(
   data = mw_df_2007_2015,
   yname = "wage",
@@ -102,6 +102,7 @@ The plot also shows a formal p-value for the null hypothesis that parallel trend
 By contrast, results using the period 2010-2015 shows that the estimated counterfactual distribution has positive density nearly everywhere, and we cannot formally reject the hypothesis that it is positive everywhere (p=0.293). This does not necessarily imply that parallel trends holds for all transformations of the outcome, but insensitivity to functional form is not rejected by the data in this example.
 
 ```{r 2010-2015}
+# (not run)
 test_2010_2015<-didFF(DF=mw_df,
                    idvar="statenum", #panel id is state 
                    yvar="wage",  #outcome is wage
