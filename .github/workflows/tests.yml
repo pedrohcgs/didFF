@@ -1,0 +1,39 @@
+name: R package CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        r: [4.1.0, 4.0.5]
+
+    env:
+      R_LIBS_USER: ${{ env.HOME }}/R/library
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v1
+      with:
+        r-version: ${{ matrix.r }}
+
+    - name: Install dependencies
+      run: |
+        install.packages("remotes")
+        remotes::install_deps()
+
+    - name: Run tests
+      run: |
+        R CMD build .
+        R CMD check mypackage_*.tar.gz --as-cran
+        Rscript -e 'testthat::test_dir("tests")'

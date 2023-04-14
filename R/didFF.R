@@ -52,6 +52,13 @@
 #'  in the treatment where units can anticipate participating in the
 #'  treatment and therefore it can affect their untreated potential outcomes
 #' @param nbins A scalar indicating the (maximum) number of bins for the support of outcome.
+#'   Default `nbins=20`. Empty bins are dropped.
+#' @param binpoints Alternative to nbins: A vector indicating the interval endpoints to use;
+#'   if the data range is not included then `min(y)` and `max(y)` are added as endpoints. For
+#'   a user-specified vector `a = c(a_1, a_2, ..., a_n)`, let `b = a` if `min(y) >= min(a)`
+#'   and `b = c(min(y), a)` otherwise; then let `c = b` if `max(y) <= max(a)` and
+#'   `c = c(b, max(y))` otherwise. Bins are `[c_1, c_2]`, `(c_2, c_3]`, ..., `(c_{n-1}, c_n]`.
+#'   Empty bins are dropped.
 #' Default `nbins=20`. Empty bins are dropped.
 #' @param numSims Number of simulation draws to compute p-value for moment inequality
 #' test. Default `numSims=100000`.
@@ -72,7 +79,7 @@
 #'  all lfeasible event times are computed.
 #' @param pl Whether or not to use parallel processing. Default is FALSE.
 #' @param cores The number of cores to use for parallel processing.
-#'  Only relevant if `pl = TRUE`.Default is `cores = 1`.
+#'  Only relevant if `pl = TRUE`.Default is `cores = parallel::detectCores()`.
 #' @return A list object containing the plot of the
 #'  implied density under the null, a table with the estimated and
 #'  implied densities, and the p-value for H0= Implied Density>=0.
@@ -85,25 +92,26 @@ didFF <-function(
     tname,
     idname,
     gname,
-    weightsname = NULL,
-    #clustervars = NULL,
-    est_method = "dr",
-    xformla = NULL,
-    panel = TRUE,
+    weightsname            = NULL,
+    #clustervars           = NULL,
+    est_method             = "dr",
+    xformla                = NULL,
+    panel                  = TRUE,
     allow_unbalanced_panel = FALSE,
-    control_group = c("nevertreated","notyettreated"),
-    anticipation = 0,
-    nbins = 20,
-    numSims = 100000,
-    seed = 0,
-    #lb_graph = NULL,
-    #ub_graph = NULL,
-    aggte_type = "group",
-    balance_e = NULL,
-    min_e = -Inf,
-    max_e = Inf,
-    pl = FALSE,
-    cores=1
+    control_group          = c("nevertreated","notyettreated"),
+    anticipation           = 0,
+    nbins                  = NULL,
+    binpoints              = NULL,
+    numSims                = 100000,
+    seed                   = 0,
+    #lb_graph              = NULL,
+    #ub_graph              = NULL,
+    aggte_type             = "group",
+    balance_e              = NULL,
+    min_e                  = -Inf,
+    max_e                  = Inf,
+    pl                     = FALSE,
+    cores                  = parallel::detectCores()
 ){
   #----------------------------------------------------------------------------
   # Store data as DF
@@ -111,20 +119,23 @@ didFF <-function(
   #----------------------------------------------------------------------------
   # Some sanity checks
   if(base::is.null(DF[[yname]])){
-    stop("Must provide yname that is part of data.")
+    base::stop("Must provide yname that is part of data.")
   }
   if(base::is.null(DF[[tname]])){
-    stop("Must provide tname that is part of data.")
+    base::stop("Must provide tname that is part of data.")
   }
   if(base::is.null(DF[[idname]])){
-    stop("Must provide idname that is part of data.")
+    base::stop("Must provide idname that is part of data.")
   }
   if(base::is.null(DF[[gname]])){
-    stop("Must provide gname that is part of data.")
+    base::stop("Must provide gname that is part of data.")
+  }
+  if(!base::is.null(nbins) & !base::is.null(binpoints)){
+    base::stop("Can only specify one of nbins or binpoints.")
   }
   possible_aggte_types <- c("simple", "dynamic", "group", "calendar")
   if((aggte_type %in% possible_aggte_types) == FALSE){
-    stop("aggte_type must be equal to `simple`, `dynamic`, `group`, or `calendar`.")
+    base::stop("aggte_type must be equal to `simple`, `dynamic`, `group`, or `calendar`.")
   }
 
   #----------------------------------------------------------------------------
@@ -136,31 +147,41 @@ didFF <-function(
   # Form bins (regardless of treatment group)
 
   # First do some sanity checks
-  if((base::is.null(nbins) | (nbins < 2))) {
-    stop("Must provide nbins at least equal to 2")
+  if(base::is.null(nbins) & base::is.null(binpoints)){
+    nbins <- 20
   }
+  if( !base::is.null(nbins) && (nbins < 2) ){
+    base::stop("Must provide nbins at least equal to 2")
+  }
+  if( !base::is.null(binpoints) ){
+    if( base::length(binpoints) < 1 ){
+      base::stop("Must provide at least 1 binpoints")
+    }
+    binpoints <- base::sort(binpoints)
+    yrange <- base::range(DF[[yname]])
+    if( binpoints[1] > yrange[1] ){
+      binpoints <- base::c(yrange[1], binpoints)
+    }
+    if( binpoints[base::length(binpoints)] < yrange[2] ){
+      binpoints <- base::c(binpoints, yrange[2])
+    }
+    if( (binpoints[1] < yrange[1]) & (yrange[2] < binpoints[base::length(binpoints)]) ){
+      base::stop("Provided binpoints group all values into single bin.")
+    }
+  }
+
   #  Build the bins
-  bin <- base::as.numeric(base::cut(DF[[yname]],
-                                    breaks = nbins,
-                                    include.lowest = TRUE,
-                                    labels =FALSE))
+  bins <- base::cut(DF[[yname]],
+                    breaks = if (base::is.null(nbins)) binpoints else nbins,
+                    include.lowest = TRUE,
+                    labels = NULL)
+  bin  <- base::as.numeric(bins)
+  bin2 <- base::levels(base::droplevels(bins))
+  level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins))
 
-  bin2 <- base::levels(base::droplevels(base::cut(data_filtered[[yname]],
-                                                  breaks = nbins,
-                                                  include.lowest = TRUE,
-                                                  labels = NULL)))
-
-  level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]",
-                                          "\\1",
-                                          base::cut(
-                                            DF[[yname]],
-                                            breaks = nbins,
-                                            include.lowest = TRUE
-                                          )
-  ) )
   #----------------------------------------------------------------------------
   # get ready for looping
-  unique_bin <- base::sort(base::unique(bin))
+  unique_bin   <- base::sort(base::unique(bin))
   unique_level <- base::sort(base::unique(level_bin))
   n_unique_bin <- base::length(unique_bin)
   # Number of ids in the data
@@ -178,101 +199,120 @@ didFF <-function(
 
   point_estimates <- base::rep(NA, times = n_unique_bin)
 
-  DF$outcome_bin <- NA
-
   # Ensure never treated is coded as Inf
   DF[[gname]] <- base::ifelse(
     DF[[gname]]==0,
     Inf,
     DF[[gname]]
   )
+
   #----------------------------------------------------------------------------
   # Compute aggte from did package using each bin as outcome
-  for (j in 1:n_unique_bin){
-    DF$outcome_bin <- -(bin == unique_bin[j])
-    DF$outcome_bin <- base::ifelse(
-      DF[[gname]] <= DF[[tname]],
-      0,
-      DF$outcome_bin
-    )
+  run_bin <- function(j){
+    outname <- base::paste0("outcome_bin", as.character(j))
 
-
+    DF[[outname]] <- -(bin == unique_bin[j])
+    DF[[outname]] <- base::ifelse(DF[[gname]] <= DF[[tname]], 0, DF[[outname]])
     out_bins <- base::suppressMessages(
       base::suppressWarnings(
         did::att_gt(
-          yname = "outcome_bin",
-          gname = gname,
-          idname = idname,
-          tname = tname,
-          data = DF,
-          control_group = control_group,
-          xformla = xformla,
-          est_method = est_method,
-          clustervars = NULL,
-          weightsname = weightsname,
-          panel = panel,
+          yname                  = outname,
+          gname                  = gname,
+          idname                 = idname,
+          tname                  = tname,
+          data                   = DF,
+          control_group          = control_group,
+          xformla                = xformla,
+          est_method             = est_method,
+          clustervars            = NULL,
+          weightsname            = weightsname,
+          panel                  = panel,
           allow_unbalanced_panel = allow_unbalanced_panel,
-          anticipation = anticipation,
-          bstrap = FALSE,
-          cband = FALSE,
-          base_period = "universal"
+          anticipation           = anticipation,
+          bstrap                 = FALSE,
+          cband                  = FALSE,
+          base_period            = "universal"
         )
       )
     )
-
+    DF[[outname]] <- NULL
 
     aggt_param <- base::suppressMessages(
       did::aggte(out_bins,
-                 type = aggte_type,
-                 na.rm = TRUE,
-                 cband = FALSE,
-                 bstrap = FALSE,
+                 type        = aggte_type,
+                 na.rm       = TRUE,
+                 cband       = FALSE,
+                 bstrap      = FALSE,
                  clustervars = NULL,
-                 balance_e = balance_e,
-                 min_e = min_e,
-                 max_e = max_e
+                 balance_e   = balance_e,
+                 min_e       = min_e,
+                 max_e       = max_e
       )
     )
-
-
-    if(aggte_type=="simple"){
-      point_estimates[j] <- aggt_param$overall.att
-      inf_function[,j] <-  aggt_param$inf.function$simple.att
-    }
-
-    if(aggte_type=="group"){
-      point_estimates[j] <- aggt_param$overall.att
-      inf_function[,j] <-   aggt_param$inf.function$selective.inf.func
-    }
-
-    if(aggte_type=="dynamic"){
-      point_estimates[j] <- aggt_param$overall.att
-      inf_function[,j] <-  aggt_param$inf.function$dynamic.inf.func
-    }
-
-    if(aggte_type=="calendar"){
-      point_estimates[j] <- aggt_param$overall.att
-      inf_function[,j] <-  aggt_param$inf.function$calendar.inf.func
-    }
+    return(aggt_param)
   }
+
+  if(aggte_type=="simple"){
+    get_inf <- function(aggt_param) {aggt_param$inf.function$simple.att}
+  }
+  if(aggte_type=="group"){
+    get_inf <- function(aggt_param) {aggt_param$inf.function$selective.inf.func}
+  }
+  if(aggte_type=="dynamic"){
+    get_inf <- function(aggt_param) {aggt_param$inf.function$dynamic.inf.func}
+  }
+  if(aggte_type=="calendar"){
+    get_inf <- function(aggt_param) {aggt_param$inf.function$calendar.inf.func}
+  }
+
+  if( pl ){
+    cl <- parallel::makeCluster(cores)
+    parallel::clusterExport(cl, c("DF",
+                                  "bin",
+                                  "unique_bin",
+                                  "gname",
+                                  "tname",
+                                  "idname",
+                                  "control_group",
+                                  "xformla",
+                                  "est_method",
+                                  "weightsname",
+                                  "panel",
+                                  "allow_unbalanced_panel",
+                                  "anticipation",
+                                  "balance_e",
+                                  "min_e",
+                                  "max_e",
+                                  "aggte_type"),
+                            envir=environment())
+    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin)
+    # doParallel::registerDoParallel(cl)
+    # results <- foreach::foreach(j=1:n_unique_bin) %dopar% run_bin(j)
+    parallel::stopCluster(cl)
+  } else {
+    results <- base::lapply(1:n_unique_bin, run_bin)
+  }
+  point_estimates <- base::unlist(base::lapply(results, function(x) x$overall.att))
+  inf_function    <- base::do.call(base::cbind, base::lapply(results, get_inf))
+
   #----------------------------------------------------------------------------
   # Drop collinear bins (only for hypothesis testing purposes)
-  qr.IF <-  base::qr(inf_function,
-                     tol=1e-6,
-                     LAPACK = FALSE)
-  rnk_IF <- qr.IF$rank
-  keep_IF <- qr.IF$pivot[seq_len(rnk_IF)]
+  qr.IF <- base::qr(inf_function,
+                    tol=1e-6,
+                    LAPACK = FALSE)
+  rnk_IF  <- qr.IF$rank
+  keep_IF <- qr.IF$pivot[base::seq_len(rnk_IF)]
 
   # Do the drops and adjust the other variables
-  inf_function <- inf_function[,keep_IF]
-  unique_bin <- unique_bin[keep_IF]
+  inf_function      <- inf_function[,keep_IF]
+  unique_bin        <- unique_bin[keep_IF]
   unique_level_orig <- unique_level
-  unique_level <- unique_level[keep_IF]
-  n_unique_bin <- base::length(unique_bin)
+  unique_level      <- unique_level[keep_IF]
+  n_unique_bin      <- base::length(unique_bin)
 
   # Drop all columns with all 0's (id was not used in the test)
-  inf_function2 <- inf_function[rowSums(abs(inf_function[]))>1e-10,]
-  n_ids_eff <- nrow(inf_function2)
+  inf_function2 <- inf_function[base::rowSums(base::abs(inf_function[]))>1e-10,]
+  n_ids_eff <- base::NROW(inf_function2)
 
   #----------------------------------------------------------------------------
   # Compute the implied pdf for each bin
@@ -283,6 +323,7 @@ didFF <-function(
 
   # Scale it to account for root-n in AsyVar
   Sigmahat <- (AsyVar/n_ids_eff)
+
   #----------------------------------------------------------------------------
   # get the implied density table
   level = NULL
@@ -291,13 +332,13 @@ didFF <-function(
     #level = bin2,
     implied_density = point_estimates
   )
+
   #----------------------------------------------------------------------------
   # Prepare data for plots
   lb_graph <- base::min(unique_level_orig)
   ub_graph <- base::max(unique_level_orig)
 
-  Outcome = NULL
-
+  #Outcome = NULL
   plotTable <- implied_density_table %>%
     #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
     dplyr::mutate(Outcome = level) %>%
@@ -338,18 +379,19 @@ didFF <-function(
       # Plot margins
       plot.margin = grid::unit(c(0.35, 0.2, 0.3, 0.35), "cm")
     )
+
   #----------------------------------------------------------------------------
   # Now, compute the moment inequality test
   # Get correlation matrix implied by sigmahat
   Cormat <- stats::cov2cor(Sigmahat)
 
   # set seed for draws
-  if (is.null(seed)) {
-    s <- Sys.time()
+  if (base::is.null(seed)) {
+    s <- base::Sys.time()
   } else {
     s <- seed
   }
-  set.seed(s)
+  base::set.seed(s)
 
   muhat_test <- -implied_density
   sims <- MASS::mvrnorm(n = numSims,
@@ -358,23 +400,17 @@ didFF <-function(
   )
 
   sims_max <- base::apply(X = sims, MARGIN = 1, FUN = max)
-
-  p_value <- mean( sims_max >= max(muhat_test/sqrt(diag(Sigmahat))) )
-
-
-  plot <- implied_density_plot
+  p_value  <- base::mean( sims_max >= base::max(muhat_test/base::sqrt(base::diag(Sigmahat))) )
+  plot     <- implied_density_plot
 
   # To have the outcome interval in the table of implied density
   implied_density_table$level <- bin2
 
   didFF_out <- list(
-    plot = plot,
+    plot  = plot,
     table = implied_density_table,
-    pval = p_value
+    pval  = p_value
   )
 
   return(didFF_out)
-
-
 }
-
