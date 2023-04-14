@@ -17,7 +17,8 @@ didFF(
   allow_unbalanced_panel = FALSE,
   control_group = c("nevertreated", "notyettreated"),
   anticipation = 0,
-  nbins = 20,
+  nbins = NULL,
+  binpoints = NULL,
   numSims = 1e+05,
   seed = 0,
   aggte_type = "group",
@@ -25,7 +26,7 @@ didFF(
   min_e = -Inf,
   max_e = Inf,
   pl = FALSE,
-  cores = 1
+  cores = parallel::detectCores()
 )
 }
 \arguments{
@@ -91,6 +92,14 @@ treatment and therefore it can affect their untreated potential outcomes}
 \item{nbins}{A scalar indicating the (maximum) number of bins for the support of outcome.
 Default \code{nbins=20}. Empty bins are dropped.}
 
+\item{binpoints}{Alternative to nbins: A vector indicating the interval endpoints to use;
+if the data range is not included then \code{min(y)} and \code{max(y)} are added as endpoints. For
+a user-specified vector \code{a = c(a_1, a_2, ..., a_n)}, let \code{b = a} if \code{min(y) >= min(a)}
+and \code{b = c(min(y), a)} otherwise; then let \code{c = b} if \code{max(y) <= max(a)} and
+\code{c = c(b, max(y))} otherwise. Bins are \verb{[c_1, c_2]}, \verb{(c_2, c_3]}, ..., \verb{(c_\{n-1\}, c_n]}.
+Empty bins are dropped.
+Default \code{nbins=20}. Empty bins are dropped.}
+
 \item{numSims}{Number of simulation draws to compute p-value for moment inequality
 test. Default \code{numSims=100000}.}
 
@@ -117,7 +126,7 @@ all lfeasible event times are computed.}
 \item{pl}{Whether or not to use parallel processing. Default is FALSE.}
 
 \item{cores}{The number of cores to use for parallel processing.
-Only relevant if \code{pl = TRUE}.Default is \code{cores = 1}.}
+Only relevant if \code{pl = TRUE}.Default is \code{cores = parallel::detectCores()}.}
 }
 \value{
 A list object containing the plot of the

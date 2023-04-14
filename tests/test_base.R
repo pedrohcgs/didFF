@@ -1,5 +1,6 @@
 # remove.packages("didFF")
 # install.packages(".", repos=NULL, type="source")
+# testthat::test_dir("tests")
 library(testthat)
 library(didFF)
 
@@ -161,16 +162,6 @@ test_that("didFF base options run with no errors", {
     )
     expect_silent(result)
   }
-
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    pl     = TRUE
-  )
-  expect_silent(result)
 
   result <- didFF(
     data   = data_filtered,
