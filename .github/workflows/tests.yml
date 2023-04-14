@@ -1,4 +1,4 @@
-name: R package CI
+name: R package tests
 
 on:
   push:
@@ -9,15 +9,10 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        r: [4.1.0, 4.0.5]
-
-    env:
-      R_LIBS_USER: ${{ env.HOME }}/R/library
-
+        r: [4.1.3, 4.2.3]
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -29,11 +24,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        install.packages("remotes")
-        remotes::install_deps()
+        install.packages("devtools")
+        devtools::install_deps()
 
     - name: Run tests
       run: |
         R CMD build .
-        R CMD check mypackage_*.tar.gz --as-cran
+        R CMD check didFF_*.tar.gz --as-cran
         Rscript -e 'testthat::test_dir("tests")'
