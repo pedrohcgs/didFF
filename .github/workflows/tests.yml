@@ -11,7 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [ubuntu-latest]
+        # os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -24,12 +25,15 @@ jobs:
     - name: Install dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        extra-packages: any::covr
-        needs: coverage
+        extra-packages: any::covr, any::devtools
+        needs: coverage, devtools
 
-    - name: Check coverage
+    - name: Check build, coverage
       run: |
-        covr::package_coverage()
+        devtools::build()
+        devtools::document()
+        devtools::check()
+        covr::package_coverage(type="all", quiet=FALSE)
       shell: Rscript {0}
 
 #     - name: Check build
@@ -41,10 +45,7 @@ jobs:
 #
 #     - name: Check coverage
 #       run: |
-#         devtools::build()
-#         devtools::document()
-#         devtools::check()
-#         covr::package_coverage()
+#         covr::report(covr::package_coverage())
 #       shell: Rscript {0}
 #
 #     - name: Show testthat output
