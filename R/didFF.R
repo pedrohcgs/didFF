@@ -59,7 +59,7 @@
 #'   and `b = c(min(y), a)` otherwise; then let `c = b` if `max(y) <= max(a)` and
 #'   `c = c(b, max(y))` otherwise. Bins are `[c_1, c_2]`, `(c_2, c_3]`, ..., `(c_{n-1}, c_n]`.
 #'   Empty bins are dropped.
-#' Default `nbins=20`. Empty bins are dropped.
+#'   Default is NULL (`nbins` is used). Empty bins are dropped.
 #' @param numSims Number of simulation draws to compute p-value for moment inequality
 #' test. Default `numSims=100000`.
 #' @param seed Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.
