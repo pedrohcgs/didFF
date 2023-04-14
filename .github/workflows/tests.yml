@@ -1,4 +1,4 @@
-name: R package tests
+name: Unit and build tests
 
 on:
   push:
@@ -8,11 +8,15 @@ on:
 
 jobs:
   tests:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        # os: [macos-latest, windows-latest, ubuntu-latest]
+        config:
+          - {os: macos-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest,  r: 'release'}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -35,22 +39,3 @@ jobs:
         devtools::check()
         covr::package_coverage(type="all", quiet=FALSE)
       shell: Rscript {0}
-
-#     - name: Check build
-#       if: matrix.os != 'windows-latest'
-#       run: |
-#         R CMD build .
-#         R CMD check didFF_*.tar.gz --as-cran
-#       shell: bash
-#
-#     - name: Check coverage
-#       run: |
-#         covr::report(covr::package_coverage())
-#       shell: Rscript {0}
-#
-#     - name: Show testthat output
-#       if: matrix.os != 'windows-latest'
-#       run: |
-#         ## --------------------------------------------------------------------
-#         find ${{ runner.temp }}/package -name 'testthat.Rout*' -exec cat '{}' \; || true
-#       shell: bash
