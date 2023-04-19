@@ -296,12 +296,15 @@ didFF <-function(
   inf_function    <- base::do.call(base::cbind, base::lapply(results, get_inf))
 
   #----------------------------------------------------------------------------
-  # Drop collinear bins (only for hypothesis testing purposes)
-  qr.IF <- base::qr(inf_function,
-                    tol=1e-6,
-                    LAPACK = FALSE)
-  rnk_IF  <- qr.IF$rank
-  keep_IF <- qr.IF$pivot[base::seq_len(rnk_IF)]
+  # Drop collinear bins (only for hypothesis testing purposes) - deprecated
+  # qr.IF <- base::qr(inf_function,
+  #                   tol=1e-6,
+  #                   LAPACK = FALSE)
+  # rnk_IF  <- qr.IF$rank
+  # keep_IF <- qr.IF$pivot[base::seq_len(rnk_IF)]
+
+  # Drop bins with zero (or very close to zero) variance
+  keep_IF <- base::colSums((inf_function[])^2)>1e-6
 
   # Do the drops and adjust the other variables
   inf_function      <- inf_function[,keep_IF]
@@ -311,7 +314,7 @@ didFF <-function(
   n_unique_bin      <- base::length(unique_bin)
 
   # Drop all columns with all 0's (id was not used in the test)
-  inf_function2 <- inf_function[base::rowSums(base::abs(inf_function[]))>1e-10,]
+  inf_function2 <- inf_function[base::rowSums(base::abs(inf_function[]))>1e-6,]
   n_ids_eff <- base::NROW(inf_function2)
 
   #----------------------------------------------------------------------------
