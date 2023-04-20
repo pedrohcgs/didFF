@@ -13,7 +13,6 @@ Imports:
     ggplot2,
     ggthemes,
     grid,
-    randtoolbox,
     MASS,
     magrittr,
     parallel,
