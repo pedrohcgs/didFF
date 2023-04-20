@@ -13,8 +13,9 @@ Imports:
     ggplot2,
     ggthemes,
     grid,
-    magrittr,
+    randtoolbox,
     MASS,
+    magrittr,
     parallel,
     testthat,
     did (>= 2.1.2)

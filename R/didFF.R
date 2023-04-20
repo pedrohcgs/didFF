@@ -98,7 +98,7 @@ didFF <-function(
     xformla                = NULL,
     panel                  = TRUE,
     allow_unbalanced_panel = FALSE,
-    control_group          = c("nevertreated","notyettreated"),
+    control_group          = base::c("nevertreated","notyettreated"),
     anticipation           = 0,
     nbins                  = NULL,
     binpoints              = NULL,
@@ -112,7 +112,10 @@ didFF <-function(
     max_e                  = Inf,
     pl                     = FALSE,
     cores                  = parallel::detectCores()
-){
+) {
+  if ( !exists(".Random.seed") ) stats::runif(1)
+  rseed.cached <- .Random.seed
+  base::on.exit({.Random.seed <<- rseed.cached})
   #----------------------------------------------------------------------------
   # Store data as DF
   DF <- as.data.frame(data)
@@ -137,7 +140,6 @@ didFF <-function(
   if((aggte_type %in% possible_aggte_types) == FALSE){
     base::stop("aggte_type must be equal to `simple`, `dynamic`, `group`, or `calendar`.")
   }
-
   #----------------------------------------------------------------------------
   # Store never-treated as Infinity
   DF[[gname]] <- base::ifelse(DF[[gname]]==0,
@@ -147,6 +149,7 @@ didFF <-function(
   # Form bins (regardless of treatment group)
 
   # First do some sanity checks
+  binsel <- DF[[tname]] < DF[[gname]]
   if(base::is.null(nbins) & base::is.null(binpoints)){
     nbins <- 20
   }
@@ -158,7 +161,7 @@ didFF <-function(
       base::stop("Must provide at least 1 binpoints")
     }
     binpoints <- base::sort(binpoints)
-    yrange <- base::range(DF[[yname]])
+    yrange <- base::range(DF[binsel, yname])
     if( binpoints[1] > yrange[1] ){
       binpoints <- base::c(yrange[1], binpoints)
     }
@@ -171,11 +174,12 @@ didFF <-function(
   }
 
   #  Build the bins
-  bins <- base::cut(DF[[yname]],
+  bin <- base::rep(NA, base::NROW(DF))
+  bins <- base::cut(DF[binsel, yname],
                     breaks = if (base::is.null(nbins)) binpoints else nbins,
                     include.lowest = TRUE,
                     labels = NULL)
-  bin  <- base::as.numeric(bins)
+  bin[binsel] <- base::as.numeric(bins)
   bin2 <- base::levels(base::droplevels(bins))
   level_bin <- base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins))
 
@@ -196,7 +200,6 @@ didFF <-function(
   inf_function <- base::matrix(NA,
                                nrow = n_ids,
                                ncol = n_unique_bin)
-
   point_estimates <- base::rep(NA, times = n_unique_bin)
 
   # Ensure never treated is coded as Inf
@@ -304,14 +307,14 @@ didFF <-function(
   keep_IF <- qr.IF$pivot[base::seq_len(rnk_IF)]
 
   # Do the drops and adjust the other variables
-  inf_function      <- inf_function[,keep_IF]
+  inf_function      <- inf_function[,keep_IF,drop=FALSE]
   unique_bin        <- unique_bin[keep_IF]
   unique_level_orig <- unique_level
   unique_level      <- unique_level[keep_IF]
   n_unique_bin      <- base::length(unique_bin)
 
   # Drop all columns with all 0's (id was not used in the test)
-  inf_function2 <- inf_function[base::rowSums(base::abs(inf_function[]))>1e-10,]
+  inf_function2 <- inf_function[base::rowSums(base::abs(inf_function[]))>1e-10,,drop=FALSE]
   n_ids_eff <- base::NROW(inf_function2)
 
   #----------------------------------------------------------------------------
@@ -394,14 +397,11 @@ didFF <-function(
   base::set.seed(s)
 
   muhat_test <- -implied_density
-  sims <- MASS::mvrnorm(n = numSims,
-                        mu = 0*muhat_test,
-                        Sigma = Cormat
-  )
-
-  sims_max <- base::apply(X = sims, MARGIN = 1, FUN = max)
-  p_value  <- base::mean( sims_max >= base::max(muhat_test/base::sqrt(base::diag(Sigmahat))) )
-  plot     <- implied_density_plot
+  muhat_max  <- base::max(muhat_test/base::sqrt(base::diag(Sigmahat)))
+  sims       <- MASS::mvrnorm(n = numSims, mu = rep(0, n_unique_bin), Sigma = Cormat)
+  sims_max   <- base::apply(X = sims, MARGIN = 1, FUN = max)
+  p_value    <- base::mean( sims_max >=  muhat_max)
+  plot       <- implied_density_plot
 
   # To have the outcome interval in the table of implied density
   implied_density_table$level <- bin2
