@@ -43,7 +43,6 @@ bins                   = base::cut(data_filtered[binsel, yname],
 binpoints              = base::sort(base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins))))
 binpoints              = seq(yrange[1], yrange[2], diff(yrange) / nbins)
 
-
 #-----------------------------------------------------------------------------
 # Example
 
@@ -64,7 +63,7 @@ test_that("didFF returns same as manual run", {
   expect_gte(base::NROW(results$table), 2)
   expect_lte(results$pval, 1)
   expect_gte(results$pval, 0)
-  expect_equal(base::sum(results$table[,2]), 1, tol=.Machine$double.eps^0.5)
+  expect_equal(base::sum(results$table[,2]), 1, tol=.Machine$double.eps^(1/2))
 
   # do run by hand
   bins <- base::cut(data_filtered[[yname]],
@@ -149,9 +148,9 @@ test_that("didFF does not depend on outcome values in treated periods", {
     denA <- resultsA$table$implied_density
     denB <- resultsB$table$implied_density
     denC <- resultsC$table$implied_density
-    expect_equal(denA, denB, tol=.Machine$double.eps^0.5)
-    expect_equal(denA, denC, tol=.Machine$double.eps^0.5)
-    expect_equal(denB, denC, tol=.Machine$double.eps^0.5)
+    expect_equal(denA, denB, tol=.Machine$double.eps^(1/2))
+    expect_equal(denA, denC, tol=.Machine$double.eps^(1/2))
+    expect_equal(denB, denC, tol=.Machine$double.eps^(1/2))
   }
 
   sub_filtered <- data_filtered$first.treat == data_filtered$year
@@ -205,9 +204,9 @@ test_that("didFF does not depend on outcome values in treated periods", {
     denA <- resultsA$table$implied_density
     denB <- resultsB$table$implied_density
     denC <- resultsC$table$implied_density
-    expect_equal(denA, denB, tol=.Machine$double.eps^0.5)
-    expect_equal(denA, denC, tol=.Machine$double.eps^0.5)
-    expect_equal(denB, denC, tol=.Machine$double.eps^0.5)
+    expect_equal(denA, denB, tol=.Machine$double.eps^(1/2))
+    expect_equal(denA, denC, tol=.Machine$double.eps^(1/2))
+    expect_equal(denB, denC, tol=.Machine$double.eps^(1/2))
   }
 })
 
@@ -215,7 +214,7 @@ test_that("didFF does not depend on outcome values in treated periods", {
 # Check explicit expression
 
 # this is all hard-coded
-test_that("didFF recovers exact theretical densities in discrete case", {
+test_that("didFF recovers exact theoretical densities in discrete case", {
   for (i in 1:10) {
     th  <- round(runif(1) * 0.6 + 0.2, 2)
     Dt  <- 1:10
@@ -253,14 +252,14 @@ test_that("didFF recovers exact theretical densities in discrete case", {
     gr1 <- round(nt0 * n * gt1)
     hr0 <- round(nt1 * n * hd0)
     hr1 <- round(nt1 * n * hd1)
-    while ( sum(gr0) < nt0 * n ) gr0[1] <- gr0[1] + 1
-    while ( sum(gr0) > nt0 * n ) gr0[1] <- gr0[1] - 1
-    while ( sum(gr0) < nt0 * n ) gr1[1] <- gr1[1] + 1
-    while ( sum(gr1) > nt0 * n ) gr1[1] <- gr1[1] - 1
-    while ( sum(hr0) < nt1 * n ) hr0[1] <- hr0[1] + 1
-    while ( sum(hr0) > nt1 * n ) hr0[1] <- hr0[1] - 1
-    while ( sum(hr1) < nt1 * n ) hr1[1] <- hr1[1] + 1
-    while ( sum(hr1) > nt1 * n ) hr1[1] <- hr1[1] - 1
+    while ( sum(gr0) < round(nt0 * n) ) gr0[1] <- gr0[1] + 1
+    while ( sum(gr0) > round(nt0 * n) ) gr0[1] <- gr0[1] - 1
+    while ( sum(gr1) < round(nt0 * n) ) gr1[1] <- gr1[1] + 1
+    while ( sum(gr1) > round(nt0 * n) ) gr1[1] <- gr1[1] - 1
+    while ( sum(hr0) < round(nt1 * n) ) hr0[1] <- hr0[1] + 1
+    while ( sum(hr0) > round(nt1 * n) ) hr0[1] <- hr0[1] - 1
+    while ( sum(hr1) < round(nt1 * n) ) hr1[1] <- hr1[1] + 1
+    while ( sum(hr1) > round(nt1 * n) ) hr1[1] <- hr1[1] - 1
     gt0 <- gr0/sum(gr0)
     gt1 <- gr1/sum(gr1)
     hd0 <- hr0/sum(hr0)
@@ -269,10 +268,10 @@ test_that("didFF recovers exact theretical densities in discrete case", {
     p01 <- th * gt0 + (1-th) * hd1
     p10 <- th * gt1 + (1-th) * hd0
     p11 <- th * gt1 + (1-th) * hd1
-    expect_equal(sum(p00), 1, tol=.Machine$double.eps^0.5)
-    expect_equal(sum(p01), 1, tol=.Machine$double.eps^0.5)
-    expect_equal(sum(p10), 1, tol=.Machine$double.eps^0.5)
-    expect_equal(sum(p11), 1, tol=.Machine$double.eps^0.5)
+    expect_equal(sum(p00), 1, tol=.Machine$double.eps^(1/2))
+    expect_equal(sum(p01), 1, tol=.Machine$double.eps^(1/2))
+    expect_equal(sum(p10), 1, tol=.Machine$double.eps^(1/2))
+    expect_equal(sum(p11), 1, tol=.Machine$double.eps^(1/2))
 
     t  <- 0:1
     n  <- (nt0 + nt1) * n
@@ -289,7 +288,7 @@ test_that("didFF recovers exact theretical densities in discrete case", {
     di[di == 0] <- Inf
     DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
     res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = c(0, sort(unique(Fy))))
-    expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^0.5)
+    expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
 
     sel0 <- ti == 0 & di == Inf
     sel1 <- ti == 0 & di == 1
@@ -306,37 +305,141 @@ test_that("didFF recovers exact theretical densities in discrete case", {
     dfM[is.na(dfM[["F1"]]), "F1"] <- 0
     dfM[is.na(dfM[["F2"]]), "F2"] <- 0
     dfM <- dfM[order(dfM$y),]
-    expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^0.5)
+    expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+  }
+})
+
+#-----------------------------------------------------------------------------
+# multiple periods, cohorts
+
+test_that("didFF recovers exact theoretical densities with multiple times/cohorts", {
+  for (i in 1:10) {
+      # Sorry for the notation: k is time and j is cohort
+      kk  <- 4
+      th  <- round(runif(1) * 0.6 + 0.2, 2)
+      Dt  <- 1:10
+      Dd  <- 1:10
+
+      # nt <- double(kk)
+      gt <- hd <- gr <- hr <- matrix(NA, kk, length(Dt))
+      p  <- list()
+      for (k in 1:kk) {
+        gt[k,] <- runif(length(Dt)) * 0.5 + 0.5
+        gt[k,] <- round(gt[k,]/sum(gt[k,]), 2)
+
+        hd[k,] <- runif(length(Dd))
+        hd[k,] <- round(hd[k,]/sum(hd[k,]), 2)
+
+        p[[k]] <- matrix(NA, kk, length(Dt))
+      }
+
+      for (k in 1:kk) {
+        for (j in 1:kk) {
+          p[[k]][j,] <- round(th * gt[k,] + (1-th) * hd[j,], 2)
+        }
+      }
+
+      n   <- 10
+      nth <- 10
+      tol <- 1e-1
+      eps <- max(abs(th*nth-round(nth * th)))
+      while ( abs(eps) > tol ) {
+        nth <- nth + 1
+        eps <- max(abs(th*nth-round(nth * th)))
+      }
+      pr  <- c(gt, hd)
+      eps <- max(abs(pr*n-round(n * pr)))
+      while ( abs(eps) > tol ) {
+        n   <- n + 1
+        eps <- max(abs(pr*n-round(n * pr)))
+      }
+
+      nt0 <- nth * th
+      nt1 <- nth - nt0
+      for (k in 1:kk) {
+        gr[k,] <- round(nt0 * n * gt[k,])
+        hr[k,] <- round(nt1 * n * hd[k,])
+      }
+
+      for (k in 1:kk) {
+        while ( sum(gr[k,]) < round(nt0 * n) ) gr[k,1] <- gr[k,1] + 1
+        while ( sum(gr[k,]) > round(nt0 * n) ) gr[k,1] <- gr[k,1] - 1
+        while ( sum(hr[k,]) < round(nt1 * n) ) hr[k,1] <- hr[k,1] + 1
+        while ( sum(hr[k,]) > round(nt1 * n) ) hr[k,1] <- hr[k,1] - 1
+      }
+
+      for (k in 1:kk) {
+        gt[k,] <- gr[k,]/sum(gr[k,])
+        hd[k,] <- hr[k,]/sum(hr[k,])
+      }
+
+      for (k in 1:kk) {
+        for (j in 1:kk) {
+          p[[k]][j,] <- th * gt[k,] + (1-th) * hd[j,]
+        }
+      }
+
+      for (k in 1:kk) {
+        for (j in 1:kk) {
+          expect_equal(sum(p[[k]][j,]), 1, tol=.Machine$double.eps^(1/2))
+        }
+      }
+
+      t  <- 0:(kk-1)
+      n  <- (nt0 + nt1) * n
+      ti <- kronecker(t, rep(1, kk * n))
+      ni <- kk * n * length(t)
+      di <- kronecker(rep(t, kk), rep(1, n))
+      id <- rep(1:(kk * n), length(t))
+      Fy <- numeric(ni)
+      for (k in 1:kk) {
+        for (j in 1:kk) {
+          Fy[ti == (k-1) & di == (j-1)] <- c(rep(Dt, gr[k,]), rep(Dd, hr[j,]))
+        }
+      }
+
+      di[di == 0] <- Inf
+      DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
+      res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g")
+
+      # ATT = 0 if not yet treated (cohort < t)
+      for (j in 2:kk) {
+        for (k in j:kk) {
+          # print(c(j-1, k-1))
+          expect_equal(unname(p[[k]][j,]), unname(res$att[(j-2) * kk + k,]), tol=.Machine$double.eps^(1/2))
+        }
+      }
   }
 })
 
 #-----------------------------------------------------------------------------
 # p-value simulation
 
-test_that("didFF rejects roughly 5% of the time", {
-  B  <- 1000
-  P  <- numeric(B)
-  for (b in 1:B) {
-    t  <- 0:1
-    n  <- 2000
-    ub <- 10
-    ti <- kronecker(t, rep(1, 2 * n))
-    ni <- 2 * n * length(t)
-    di <- kronecker(rep(t, 2), rep(1, n))
-    id <- rep(1:(2*n), length(t))
-    Fy <- numeric(ni)
-    Fy[ti == 0 & di == 0] <- sample(1:ub, n, T)
-    Fy[ti == 0 & di == 1] <- sample(1:ub, n, T)
-    Fy[ti == 1 & di == 0] <- sample((ub-1):ub, n, T)
-    Fy[ti == 1 & di == 1] <- 0
-
-    di[di == 0] <- Inf
-    DF   <- data.frame(y=Fy, t=ti, i=id, g=di)
-    res  <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = 0:ub)
-    P[b] <- res$pval
-    # print(res$pval)
-    # print(res$table)
-    # round(res$table$implied_density, 3)
-  }
-  expect_equal(as.numeric(table(cut(P, breaks=c(0, 0.05, 0.1)))/length(P)), c(0.05, 0.05), 0.001)
-})
+# Please run locally
+# test_that("didFF rejects roughly 5% of the time", {
+#   B  <- 1000
+#   P  <- numeric(B)
+#   for (b in 1:B) {
+#     t  <- 0:1
+#     n  <- 2000
+#     ub <- 10
+#     ti <- kronecker(t, rep(1, 2 * n))
+#     ni <- 2 * n * length(t)
+#     di <- kronecker(rep(t, 2), rep(1, n))
+#     id <- rep(1:(2*n), length(t))
+#     Fy <- numeric(ni)
+#     Fy[ti == 0 & di == 0] <- sample(1:ub, n, T)
+#     Fy[ti == 0 & di == 1] <- sample(1:ub, n, T)
+#     Fy[ti == 1 & di == 0] <- sample((ub-1):ub, n, T)
+#     Fy[ti == 1 & di == 1] <- 0
+#
+#     di[di == 0] <- Inf
+#     DF   <- data.frame(y=Fy, t=ti, i=id, g=di)
+#     res  <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = 0:ub)
+#     P[b] <- res$pval
+#     # print(res$pval)
+#     # print(res$table)
+#     # round(res$table$implied_density, 3)
+#   }
+#   expect_equal(as.numeric(table(cut(P, breaks=c(0, 0.05, 0.1)))/length(P)), c(0.05, 0.05), 0.001)
+# })

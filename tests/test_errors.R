@@ -184,3 +184,28 @@ test_that("didFF stops if invalid control_group", {
     ), "control_group must be either 'nevertreated' or 'notyettreated'"
   )
 })
+
+test_that("didFF stops if invalid no never-treated", {
+  data_filtered[data_filtered[[gname]] == Inf, gname] <- -1
+  expect_error(
+    didFF(
+      data    = data_filtered,
+      yname   = yname,
+      tname   = tname,
+      idname  = idname,
+      gname   = gname
+    ), "No cohorts g=Inf or g=0 found; assuming no cohorts are never-treated. Use option nevertreated to specify the never-treated cohort."
+  )
+
+  data_filtered[data_filtered[[gname]] == -1, gname] <- 0
+  data_filtered[[tname]] <- data_filtered[[tname]] - 2004
+  expect_error(
+    didFF(
+      data    = data_filtered,
+      yname   = yname,
+      tname   = tname,
+      idname  = idname,
+      gname   = gname
+    ), "No never-treated cohorts identified: You have observations with g=0 and at least one time period t <= 0. We assume this means that cohort's treatment started at time 0; if instead this means those units are never-treated, use option nevertreated=0 instead."
+  )
+})
