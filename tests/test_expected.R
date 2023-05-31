@@ -34,8 +34,6 @@ anticipation           = 0
 allow_unbalanced_panel = FALSE
 panel                  = TRUE
 aggte_type             = "group"
-binsel                 = data_filtered[[tname]] < data_filtered[[gname]]
-yrange                 = range(data_filtered[binsel, yname])
 
 data_bins <- did::pre_process_did(yname                  = yname,
                                   tname                  = tname,
@@ -49,6 +47,8 @@ data_bins <- did::pre_process_did(yname                  = yname,
                                   anticipation           = anticipation,
                                   est_method             = est_method,
                                   base_period            = "universal")$data
+binsel    = data_bins[[tname]] < data_bins[[gname]]
+yrange    = range(data_bins[binsel, yname])
 bins      = base::cut(data_bins[binsel, yname],
                       breaks = nbins,
                       include.lowest = TRUE,

@@ -57,8 +57,6 @@ stagtest_genasync <- function(ni, nt, offset=123, frac.never=0.3) {
 
 baserun <- function(dat) {
   dat[dat[[gname]]==-1, gname] <- 0
-  binsel    <- dat[[tname]] < dat[[gname]]
-  yrange    <- range(dat[binsel, yname])
   data_bins <- did::pre_process_did(yname                  = yname,
                                     tname                  = tname,
                                     idname                 = idname,
@@ -66,6 +64,8 @@ baserun <- function(dat) {
                                     data                   = dat,
                                     allow_unbalanced_panel = FALSE,
                                     base_period            = "universal")$data
+  binsel    <- data_bins[[tname]] < data_bins[[gname]]
+  yrange    <- range(data_bins[binsel, yname])
   bins      <- base::cut(data_bins[binsel, yname],
                          breaks = nbins,
                          include.lowest = TRUE,
