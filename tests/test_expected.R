@@ -36,12 +36,25 @@ panel                  = TRUE
 aggte_type             = "group"
 binsel                 = data_filtered[[tname]] < data_filtered[[gname]]
 yrange                 = range(data_filtered[binsel, yname])
-bins                   = base::cut(data_filtered[binsel, yname],
-                                   breaks = nbins,
-                                   include.lowest = TRUE,
-                                   labels = NULL)
-binpoints              = base::sort(base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins))))
-binpoints              = seq(yrange[1], yrange[2], diff(yrange) / nbins)
+
+data_bins <- did::pre_process_did(yname                  = yname,
+                                  tname                  = tname,
+                                  idname                 = idname,
+                                  gname                  = gname,
+                                  xformla                = xformla,
+                                  data                   = data_filtered,
+                                  panel                  = panel,
+                                  allow_unbalanced_panel = allow_unbalanced_panel,
+                                  control_group          = control_group,
+                                  anticipation           = anticipation,
+                                  est_method             = est_method,
+                                  base_period            = "universal")$data
+bins      = base::cut(data_bins[binsel, yname],
+                      breaks = nbins,
+                      include.lowest = TRUE,
+                      labels = NULL)
+binpoints = base::sort(base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins))))
+binpoints = seq(yrange[1], yrange[2], diff(yrange) / nbins)
 
 #-----------------------------------------------------------------------------
 # Example

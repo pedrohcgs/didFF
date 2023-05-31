@@ -195,19 +195,19 @@ didFF <-function(
   # This displays the right warnings from did wrt balancing the data,
   # etc.  It also sets up the data for att_gt. This is processed here
   # so the bins are created only from this data.
-  did::pre_process_did(yname                  = yname,
-                       tname                  = tname,
-                       idname                 = idname,
-                       gname                  = gname,
-                       xformla                = xformla,
-                       data                   = DF,
-                       panel                  = panel,
-                       allow_unbalanced_panel = allow_unbalanced_panel,
-                       control_group          = control_group,
-                       anticipation           = anticipation,
-                       weightsname            = weightsname,
-                       est_method             = est_method,
-                       base_period            = "universal")
+  DF <- did::pre_process_did(yname                  = yname,
+                             tname                  = tname,
+                             idname                 = idname,
+                             gname                  = gname,
+                             xformla                = xformla,
+                             data                   = DF,
+                             panel                  = panel,
+                             allow_unbalanced_panel = allow_unbalanced_panel,
+                             control_group          = control_group,
+                             anticipation           = anticipation,
+                             weightsname            = weightsname,
+                             est_method             = est_method,
+                             base_period            = "universal")$data
 
   # First do some sanity checks
   binsel <- DF[[tname]] < DF[[gname]]

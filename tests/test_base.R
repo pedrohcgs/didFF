@@ -31,11 +31,24 @@ anticipation           = 0
 allow_unbalanced_panel = FALSE
 panel                  = TRUE
 aggte_type             = "group"
-bins                   = base::cut(data_filtered[[yname]],
-                                   breaks = 20,
-                                   include.lowest = TRUE,
-                                   labels = NULL)
-binpoints              = base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
+
+data_bins <- did::pre_process_did(yname                  = yname,
+                                  tname                  = tname,
+                                  idname                 = idname,
+                                  gname                  = gname,
+                                  xformla                = xformla,
+                                  data                   = data_filtered,
+                                  panel                  = panel,
+                                  allow_unbalanced_panel = allow_unbalanced_panel,
+                                  control_group          = control_group,
+                                  anticipation           = anticipation,
+                                  est_method             = est_method,
+                                  base_period            = "universal")$data
+bins = base::cut(data_bins[[yname]],
+                 breaks = 20,
+                 include.lowest = TRUE,
+                 labels = NULL)
+binpoints = base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
 
 # Run the test
 test_that("didFF base run with no errors", {
