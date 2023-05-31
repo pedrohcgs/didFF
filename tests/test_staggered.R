@@ -59,7 +59,14 @@ baserun <- function(dat) {
   dat[dat[[gname]]==-1, gname] <- 0
   binsel    <- dat[[tname]] < dat[[gname]]
   yrange    <- range(dat[binsel, yname])
-  bins      <- base::cut(dat[binsel, yname],
+  data_bins <- did::pre_process_did(yname                  = yname,
+                                    tname                  = tname,
+                                    idname                 = idname,
+                                    gname                  = gname,
+                                    data                   = dat,
+                                    allow_unbalanced_panel = FALSE,
+                                    base_period            = "universal")$data
+  bins      <- base::cut(data_bins[binsel, yname],
                          breaks = nbins,
                          include.lowest = TRUE,
                          labels = NULL)
