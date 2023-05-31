@@ -314,101 +314,122 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
 
 test_that("didFF recovers exact theoretical densities with multiple times/cohorts", {
   for (i in 1:10) {
-      # Sorry for the notation: k is time and j is cohort
-      kk  <- 4
-      th  <- round(runif(1) * 0.6 + 0.2, 2)
-      Dt  <- 1:10
-      Dd  <- 1:10
+    # Sorry for the notation: k is time and j is cohort
+    kk  <- 4
+    th  <- round(runif(1) * 0.6 + 0.2, 2)
+    Dt  <- 1:10
+    Dd  <- 1:10
 
-      # nt <- double(kk)
-      gt <- hd <- gr <- hr <- matrix(NA, kk, length(Dt))
-      p  <- list()
-      for (k in 1:kk) {
-        gt[k,] <- runif(length(Dt)) * 0.5 + 0.5
-        gt[k,] <- round(gt[k,]/sum(gt[k,]), 2)
+    # nt <- double(kk)
+    gt <- hd <- gr <- hr <- matrix(NA, kk, length(Dt))
+    p  <- list()
+    for (k in 1:kk) {
+      gt[k,] <- runif(length(Dt)) * 0.5 + 0.5
+      gt[k,] <- round(gt[k,]/sum(gt[k,]), 2)
 
-        hd[k,] <- runif(length(Dd))
-        hd[k,] <- round(hd[k,]/sum(hd[k,]), 2)
+      hd[k,] <- runif(length(Dd))
+      hd[k,] <- round(hd[k,]/sum(hd[k,]), 2)
 
-        p[[k]] <- matrix(NA, kk, length(Dt))
+      p[[k]] <- matrix(NA, kk, length(Dt))
+    }
+
+    for (k in 1:kk) {
+      for (j in 1:kk) {
+        p[[k]][j,] <- round(th * gt[k,] + (1-th) * hd[j,], 2)
       }
+    }
 
-      for (k in 1:kk) {
-        for (j in 1:kk) {
-          p[[k]][j,] <- round(th * gt[k,] + (1-th) * hd[j,], 2)
-        }
-      }
-
-      n   <- 10
-      nth <- 10
-      tol <- 1e-1
+    n   <- 10
+    nth <- 10
+    tol <- 1e-1
+    eps <- max(abs(th*nth-round(nth * th)))
+    while ( abs(eps) > tol ) {
+      nth <- nth + 1
       eps <- max(abs(th*nth-round(nth * th)))
-      while ( abs(eps) > tol ) {
-        nth <- nth + 1
-        eps <- max(abs(th*nth-round(nth * th)))
-      }
-      pr  <- c(gt, hd)
+    }
+    pr  <- c(gt, hd)
+    eps <- max(abs(pr*n-round(n * pr)))
+    while ( abs(eps) > tol ) {
+      n   <- n + 1
       eps <- max(abs(pr*n-round(n * pr)))
-      while ( abs(eps) > tol ) {
-        n   <- n + 1
-        eps <- max(abs(pr*n-round(n * pr)))
-      }
+    }
 
-      nt0 <- nth * th
-      nt1 <- nth - nt0
-      for (k in 1:kk) {
-        gr[k,] <- round(nt0 * n * gt[k,])
-        hr[k,] <- round(nt1 * n * hd[k,])
-      }
+    nt0 <- nth * th
+    nt1 <- nth - nt0
+    for (k in 1:kk) {
+      gr[k,] <- round(nt0 * n * gt[k,])
+      hr[k,] <- round(nt1 * n * hd[k,])
+    }
 
-      for (k in 1:kk) {
-        while ( sum(gr[k,]) < round(nt0 * n) ) gr[k,1] <- gr[k,1] + 1
-        while ( sum(gr[k,]) > round(nt0 * n) ) gr[k,1] <- gr[k,1] - 1
-        while ( sum(hr[k,]) < round(nt1 * n) ) hr[k,1] <- hr[k,1] + 1
-        while ( sum(hr[k,]) > round(nt1 * n) ) hr[k,1] <- hr[k,1] - 1
-      }
+    for (k in 1:kk) {
+      while ( sum(gr[k,]) < round(nt0 * n) ) gr[k,1] <- gr[k,1] + 1
+      while ( sum(gr[k,]) > round(nt0 * n) ) gr[k,1] <- gr[k,1] - 1
+      while ( sum(hr[k,]) < round(nt1 * n) ) hr[k,1] <- hr[k,1] + 1
+      while ( sum(hr[k,]) > round(nt1 * n) ) hr[k,1] <- hr[k,1] - 1
+    }
 
-      for (k in 1:kk) {
-        gt[k,] <- gr[k,]/sum(gr[k,])
-        hd[k,] <- hr[k,]/sum(hr[k,])
-      }
+    for (k in 1:kk) {
+      gt[k,] <- gr[k,]/sum(gr[k,])
+      hd[k,] <- hr[k,]/sum(hr[k,])
+    }
 
-      for (k in 1:kk) {
-        for (j in 1:kk) {
-          p[[k]][j,] <- th * gt[k,] + (1-th) * hd[j,]
-        }
+    for (k in 1:kk) {
+      for (j in 1:kk) {
+        p[[k]][j,] <- th * gt[k,] + (1-th) * hd[j,]
       }
+    }
 
-      for (k in 1:kk) {
-        for (j in 1:kk) {
-          expect_equal(sum(p[[k]][j,]), 1, tol=.Machine$double.eps^(1/2))
-        }
+    for (k in 1:kk) {
+      for (j in 1:kk) {
+        expect_equal(sum(p[[k]][j,]), 1, tol=.Machine$double.eps^(1/2))
       }
+    }
 
-      t  <- 0:(kk-1)
-      n  <- (nt0 + nt1) * n
-      ti <- kronecker(t, rep(1, kk * n))
-      ni <- kk * n * length(t)
-      di <- kronecker(rep(t, kk), rep(1, n))
-      id <- rep(1:(kk * n), length(t))
-      Fy <- numeric(ni)
-      for (k in 1:kk) {
-        for (j in 1:kk) {
-          Fy[ti == (k-1) & di == (j-1)] <- c(rep(Dt, gr[k,]), rep(Dd, hr[j,]))
-        }
+    t  <- 0:(kk-1)
+    n  <- (nt0 + nt1) * n
+    ti <- kronecker(t, rep(1, kk * n))
+    ni <- kk * n * length(t)
+    di <- kronecker(rep(t, kk), rep(1, n))
+    id <- rep(1:(kk * n), length(t))
+    Fy <- numeric(ni)
+    for (k in 1:kk) {
+      for (j in 1:kk) {
+        Fy[ti == (k-1) & di == (j-1)] <- c(rep(Dt, gr[k,]), rep(Dd, hr[j,]))
       }
+    }
 
-      di[di == 0] <- Inf
-      DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
-      res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g")
+    di[di == 0] <- Inf
+    DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
+    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g")
 
-      # ATT = 0 if not yet treated (cohort < t)
-      for (j in 2:kk) {
-        for (k in j:kk) {
-          # print(c(j-1, k-1))
-          expect_equal(unname(p[[k]][j,]), unname(res$att[(j-2) * kk + k,]), tol=.Machine$double.eps^(1/2))
-        }
+    # ATT = 0 if not yet treated (cohort < t)
+    for (j in 2:kk) {
+      for (k in j:kk) {
+        # print(c(j-1, k-1))
+        expect_equal(unname(p[[k]][j,]), unname(res$att[(j-2) * kk + k,]), tol=.Machine$double.eps^(1/2))
       }
+    }
+
+    for (gg in 1:(kk-1)) {
+      for (tt in gg:(kk-1)) {
+        sel0 <- (ti == (gg-1)) & di == Inf
+        sel1 <- (ti == (gg-1)) & di == gg
+        sel2 <- (ti == tt)     & di == Inf
+        df0  <- data.frame(prop.table(table(Fy[sel0])))
+        df1  <- data.frame(prop.table(table(Fy[sel1])))
+        df2  <- data.frame(prop.table(table(Fy[sel2])))
+        colnames(df0) <- c("y", "F0")
+        colnames(df1) <- c("y", "F1")
+        colnames(df2) <- c("y", "F2")
+        dfM <- merge(df0, df1, by="y", all=TRUE)
+        dfM <- merge(dfM, df2, by="y", all=TRUE)
+        dfM[is.na(dfM[["F0"]]), "F0"] <- 0
+        dfM[is.na(dfM[["F1"]]), "F1"] <- 0
+        dfM[is.na(dfM[["F2"]]), "F2"] <- 0
+        dfM <- dfM[order(dfM$y),]
+        expect_equal(unname(res$att[(gg - 1)*kk+tt+1,]), dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+      }
+    }
   }
 })
 

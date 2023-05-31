@@ -31,13 +31,11 @@ jobs:
     - name: Install dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        extra-packages: any::covr, any::devtools
-        needs: coverage, devtools
+        extra-packages: any::devtools
+        needs: devtools
 
-    - name: Check build, coverage
+    - name: Check build
       run: |
-        covr::package_coverage(type="all", quiet=FALSE)
-        devtools::build()
         devtools::document()
         devtools::check()
       shell: Rscript {0}
