@@ -230,13 +230,15 @@ didFF <-function(
     }
     binpoints <- base::sort(binpoints)
     yrange <- base::range(DF[binsel, yname])
-    if( binpoints[1] > yrange[1] ){
+    diff1  <- binpoints[1] - yrange[1]
+    diffn  <- binpoints[base::length(binpoints)] - yrange[2]
+    if( (diff1 > 0) & (base::abs(diff1) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(yrange[1], binpoints)
     }
-    if( binpoints[base::length(binpoints)] < yrange[2] ){
+    if( (diffn < 0) & (base::abs(diffn) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(binpoints, yrange[2])
     }
-    if( (binpoints[1] < yrange[1]) & (yrange[2] < binpoints[base::length(binpoints)]) ){
+    if( (diff1 < 0) & (diffn > 0) ){
       base::stop("Provided binpoints group all values into single bin.")
     }
   }
