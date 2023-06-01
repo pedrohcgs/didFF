@@ -193,21 +193,27 @@ didFF <-function(
   # Form bins (regardless of treatment group)
 
   # This displays the right warnings from did wrt balancing the data,
-  # etc.  It also sets up the data for att_gt. This is processed here
-  # so the bins are created only from this data.
-  did::pre_process_did(yname                  = yname,
-                       tname                  = tname,
-                       idname                 = idname,
-                       gname                  = gname,
-                       xformla                = xformla,
-                       data                   = DF,
-                       panel                  = panel,
-                       allow_unbalanced_panel = allow_unbalanced_panel,
-                       control_group          = control_group,
-                       anticipation           = anticipation,
-                       weightsname            = weightsname,
-                       est_method             = est_method,
-                       base_period            = "universal")$data
+  # etc.  It also sets up the data for att_gt. This is processed here so
+  # the bins are created only from this data.
+  #
+  # Also need to mask g, t so it's all > 0; currently never treated is
+  # coded as Inf or there are no never treated units.
+  mask <- base::min(DF[[gname]], DF[[tname]])
+  DF[[gname]] <- DF[[gname]] - mask + 1
+  DF[[tname]] <- DF[[tname]] - mask + 1
+  DF <- did::pre_process_did(yname                  = yname,
+                             tname                  = tname,
+                             idname                 = idname,
+                             gname                  = gname,
+                             xformla                = xformla,
+                             data                   = DF,
+                             panel                  = panel,
+                             allow_unbalanced_panel = allow_unbalanced_panel,
+                             control_group          = control_group,
+                             anticipation           = anticipation,
+                             weightsname            = weightsname,
+                             est_method             = est_method,
+                             base_period            = "universal")$data
 
   # First do some sanity checks
   binsel <- DF[[tname]] < DF[[gname]]
@@ -319,7 +325,7 @@ didFF <-function(
       )
     )
 
-    names(out_bins$att) <- paste("g=", out_bins$group, ", t=", out_bins$t, sep="")
+    names(out_bins$att) <- paste("g=", out_bins$group - 1 + mask, ", t=", out_bins$t - 1 + mask, sep="")
     return(list(aggt_param=aggt_param, att=out_bins$att))
   }
 
@@ -339,6 +345,7 @@ didFF <-function(
   if( pl ){
     cl <- parallel::makeCluster(cores)
     parallel::clusterExport(cl, c("DF",
+                                  "mask",
                                   "bin",
                                   "unique_bin",
                                   "gname",
