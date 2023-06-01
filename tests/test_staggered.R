@@ -56,6 +56,7 @@ stagtest_genasync <- function(ni, nt, offset=123, frac.never=0.3) {
 }
 
 baserun <- function(dat) {
+  # NB: It's OK not to mask in this example bc time starts after offset (default 123)
   dat[dat[[gname]]==-1, gname] <- 0
   data_bins <- did::pre_process_did(yname                  = yname,
                                     tname                  = tname,
@@ -64,7 +65,7 @@ baserun <- function(dat) {
                                     data                   = dat,
                                     allow_unbalanced_panel = FALSE,
                                     base_period            = "universal")$data
-  binsel    <- data_bins[[tname]] < data_bins[[gname]]
+  binsel    <- (data_bins[[tname]] < data_bins[[gname]]) | (data_bins[[gname]] == 0)
   yrange    <- range(data_bins[binsel, yname])
   bins      <- base::cut(data_bins[binsel, yname],
                          breaks = nbins,

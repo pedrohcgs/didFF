@@ -35,6 +35,7 @@ allow_unbalanced_panel = FALSE
 panel                  = TRUE
 aggte_type             = "group"
 
+# NB: It's OK not to mask in this example bc time starts in the 2000s
 data_bins <- did::pre_process_did(yname                  = yname,
                                   tname                  = tname,
                                   idname                 = idname,
@@ -47,7 +48,7 @@ data_bins <- did::pre_process_did(yname                  = yname,
                                   anticipation           = anticipation,
                                   est_method             = est_method,
                                   base_period            = "universal")$data
-binsel    = data_bins[[tname]] < data_bins[[gname]]
+binsel    = (data_bins[[tname]] < data_bins[[gname]]) | (data_bins[[gname]] == 0)
 yrange    = range(data_bins[binsel, yname])
 bins      = base::cut(data_bins[binsel, yname],
                       breaks = nbins,
