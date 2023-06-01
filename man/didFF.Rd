@@ -15,7 +15,8 @@ didFF(
   xformla = NULL,
   panel = TRUE,
   allow_unbalanced_panel = FALSE,
-  control_group = c("nevertreated", "notyettreated"),
+  nevertreated = NULL,
+  control_group = base::c("nevertreated", "notyettreated"),
   anticipation = 0,
   nbins = NULL,
   binpoints = NULL,
@@ -73,6 +74,10 @@ all units where data is not observed in all periods.
 The advantage of this is that the computations are faster
 (sometimes substantially).}
 
+\item{nevertreated}{A scalar indicating never treated cohort. If any cohorts are equal to 0
+and all time periods are above 0, then the 0 cohort is taken as never-treated by default;
+otherwise the default is Inf.}
+
 \item{control_group}{Which units to use the control group.
 The default is \code{control_group = "nevertreated"}, which sets the control group
 to be the group of units that never participate in the
@@ -90,15 +95,17 @@ in the treatment where units can anticipate participating in the
 treatment and therefore it can affect their untreated potential outcomes}
 
 \item{nbins}{A scalar indicating the (maximum) number of bins for the support of outcome.
-Default \code{nbins=20}. Empty bins are dropped.}
+By default, if the outcome has fewer than 20 values then it is taken to be a discrete
+variable; otherwise \code{nbins=20} is used. Empty bins dropped.}
 
 \item{binpoints}{Alternative to nbins: A vector indicating the interval endpoints to use;
 if the data range is not included then \code{min(y)} and \code{max(y)} are added as endpoints. For
 a user-specified vector \code{a = c(a_1, a_2, ..., a_n)}, let \code{b = a} if \code{min(y) >= min(a)}
 and \code{b = c(min(y), a)} otherwise; then let \code{c = b} if \code{max(y) <= max(a)} and
 \code{c = c(b, max(y))} otherwise. Bins are \verb{[c_1, c_2]}, \verb{(c_2, c_3]}, ..., \verb{(c_\{n-1\}, c_n]}.
-Empty bins are dropped.
-Default \code{nbins=20}. Empty bins are dropped.}
+Empty bins are dropped.  By default, if the outcome has fewer than
+20 values then it is taken to be a discrete variable and its values
+are used as bin points. Otherwise \code{nbins} is used.}
 
 \item{numSims}{Number of simulation draws to compute p-value for moment inequality
 test. Default \code{numSims=100000}.}

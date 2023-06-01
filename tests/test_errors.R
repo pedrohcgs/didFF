@@ -27,11 +27,24 @@ anticipation           = 0
 allow_unbalanced_panel = FALSE
 panel                  = TRUE
 aggte_type             = "group"
-bins                   = base::cut(data_filtered[[yname]],
-                                   breaks = 20,
-                                   include.lowest = TRUE,
-                                   labels = NULL)
-binpoints              = base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
+
+data_bins <- did::pre_process_did(yname                  = yname,
+                                  tname                  = tname,
+                                  idname                 = idname,
+                                  gname                  = gname,
+                                  xformla                = xformla,
+                                  data                   = data_filtered,
+                                  panel                  = panel,
+                                  allow_unbalanced_panel = allow_unbalanced_panel,
+                                  control_group          = control_group,
+                                  anticipation           = anticipation,
+                                  est_method             = est_method,
+                                  base_period            = "universal")$data
+bins = base::cut(data_bins[[yname]],
+                 breaks = 20,
+                 include.lowest = TRUE,
+                 labels = NULL)
+binpoints = base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
 
 #-----------------------------------------------------------------------------
 # errors
@@ -182,5 +195,30 @@ test_that("didFF stops if invalid control_group", {
       gname   = gname,
       control_group = "not allowed"
     ), "control_group must be either 'nevertreated' or 'notyettreated'"
+  )
+})
+
+test_that("didFF stops if invalid no never-treated", {
+  data_filtered[data_filtered[[gname]] == Inf, gname] <- -1
+  expect_error(
+    didFF(
+      data    = data_filtered,
+      yname   = yname,
+      tname   = tname,
+      idname  = idname,
+      gname   = gname
+    ), "No cohorts g=Inf or g=0 found; assuming no cohorts are never-treated. Use option nevertreated to specify the never-treated cohort."
+  )
+
+  data_filtered[data_filtered[[gname]] == -1, gname] <- 0
+  data_filtered[[tname]] <- data_filtered[[tname]] - 2004
+  expect_error(
+    didFF(
+      data    = data_filtered,
+      yname   = yname,
+      tname   = tname,
+      idname  = idname,
+      gname   = gname
+    ), "No never-treated cohorts identified: You have observations with g=0 and at least one time period t <= 0. We assume this means that cohort's treatment started at time 0; if instead this means those units are never-treated, use option nevertreated=0 instead."
   )
 })
