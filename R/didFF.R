@@ -216,7 +216,8 @@ didFF <-function(
                              base_period            = "universal")$data
 
   # First do some sanity checks
-  binsel <- DF[[tname]] < DF[[gname]]
+  # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
+  binsel <- (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
   yvals  <- NULL
   nvals  <- Inf
   if(base::is.null(nbins) & base::is.null(binpoints)){
@@ -286,8 +287,9 @@ didFF <-function(
   run_bin <- function(j){
     outname <- base::paste0("outcome_bin", as.character(j))
 
+    # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
     DF[[outname]] <- -(bin == unique_bin[j])
-    DF[[outname]] <- base::ifelse(DF[[gname]] <= DF[[tname]], 0, DF[[outname]])
+    DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
     out_bins <- base::suppressMessages(
       base::suppressWarnings(
         did::att_gt(
