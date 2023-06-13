@@ -116,6 +116,7 @@ didFF <-function(
     balance_e              = NULL,
     min_e                  = -Inf,
     max_e                  = Inf,
+    test.option            = FALSE,
     pl                     = FALSE,
     cores                  = parallel::detectCores()
 ) {
@@ -284,12 +285,16 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Compute aggte from did package using each bin as outcome
-  run_bin <- function(j){
+  run_bin <- function(j, test.option=FALSE){
     outname <- base::paste0("outcome_bin", as.character(j))
 
     # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-    DF[[outname]] <- -(bin == unique_bin[j])
-    DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
+    if ( test.option ) {
+      DF[[outname]] <- (bin == unique_bin[j])
+    } else {
+      DF[[outname]] <- -(bin == unique_bin[j])
+      DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
+    }
     out_bins <- base::suppressMessages(
       base::suppressWarnings(
         did::att_gt(
@@ -365,12 +370,12 @@ didFF <-function(
                                   "max_e",
                                   "aggte_type"),
                             envir=environment())
-    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin)
+    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin, test.option=test.option)
     # doParallel::registerDoParallel(cl)
     # results <- foreach::foreach(j=1:n_unique_bin) %dopar% run_bin(j)
     parallel::stopCluster(cl)
   } else {
-    results <- base::lapply(1:n_unique_bin, run_bin)
+    results <- base::lapply(1:n_unique_bin, run_bin, test.option=test.option)
   }
   point_estimates <- base::unlist(base::lapply(results, function(x) x$aggt_param$overall.att))
   inf_function    <- base::do.call(base::cbind, base::lapply(results, get_inf))
@@ -400,6 +405,7 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Compute the implied pdf for each bin
+
   implied_density <- point_estimates[keep_IF]
 
   #Asymptotic Variance-covariance matrix
@@ -410,6 +416,7 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # get the implied density table
+
   level = NULL
   implied_density_table <- base::data.frame(
     level = unique_level_orig,
@@ -419,81 +426,92 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Prepare data for plots
-  lb_graph <- base::min(unique_level_orig)
-  ub_graph <- base::max(unique_level_orig)
 
-  #Outcome = NULL
-  plotTable <- implied_density_table %>%
-    #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
-    dplyr::mutate(Outcome = level) %>%
-    dplyr::mutate(
-      `Implied Density` = base::ifelse(implied_density < 0,
-                                       "Negative",
-                                       "Non-negative"))
-  #`Implied Density` <- NULL
-  basic_plot<- plotTable %>%
-    ggplot2::ggplot(ggplot2::aes(x=Outcome,
-                                 y = implied_density,
-                                 # fill = c)) +
-                                 fill = `Implied Density`)) +
-    ggplot2::geom_bar(stat = "identity") +
-    ggplot2::xlab("Outcome") +
-    ggplot2::ylab("Implied Density")
+  if ( !test.option ) {
+    lb_graph <- base::min(unique_level_orig)
+    ub_graph <- base::max(unique_level_orig)
 
-  #Format basic plot
-  implied_density_plot <- basic_plot +
-    ggthemes::theme_clean(base_size=12) +
-    ggplot2::scale_fill_brewer(palette = "Set1") +
-    ggplot2::theme(
-      # Background
-      plot.background = ggplot2::element_blank(),
-      # Format legend
-      legend.text = ggplot2::element_text(size=10),
-      legend.title = ggplot2::element_text(size=10),
-      legend.box.background = ggplot2::element_blank(),
-      legend.background = ggplot2::element_blank(),
+    #Outcome = NULL
+    plotTable <- implied_density_table %>%
+      #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
+      dplyr::mutate(Outcome = level) %>%
+      dplyr::mutate(
+        `Implied Density` = base::ifelse(implied_density < 0,
+                                         "Negative",
+                                         "Non-negative"))
+    #`Implied Density` <- NULL
+    basic_plot<- plotTable %>%
+      ggplot2::ggplot(ggplot2::aes(x=Outcome,
+                                   y = implied_density,
+                                   # fill = c)) +
+                                   fill = `Implied Density`)) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::xlab("Outcome") +
+      ggplot2::ylab("Implied Density")
 
-      # Set title and axis labels, and format these and tick marks
-      plot.title=ggplot2::element_text(size=13, vjust=1.25, hjust = 0.5),
-      axis.text.x=ggplot2::element_text(size=10),
-      axis.text.y=ggplot2::element_text(size=10),
-      axis.title.x=ggplot2::element_text(size=10, vjust=0),
-      axis.title.y=ggplot2::element_text(size=10, vjust=1.25),
+    #Format basic plot
+    implied_density_plot <- basic_plot +
+      ggthemes::theme_clean(base_size=12) +
+      ggplot2::scale_fill_brewer(palette = "Set1") +
+      ggplot2::theme(
+        # Background
+        plot.background = ggplot2::element_blank(),
+        # Format legend
+        legend.text = ggplot2::element_text(size=10),
+        legend.title = ggplot2::element_text(size=10),
+        legend.box.background = ggplot2::element_blank(),
+        legend.background = ggplot2::element_blank(),
 
-      # Plot margins
-      plot.margin = grid::unit(c(0.35, 0.2, 0.3, 0.35), "cm")
-    )
+        # Set title and axis labels, and format these and tick marks
+        plot.title=ggplot2::element_text(size=13, vjust=1.25, hjust = 0.5),
+        axis.text.x=ggplot2::element_text(size=10),
+        axis.text.y=ggplot2::element_text(size=10),
+        axis.title.x=ggplot2::element_text(size=10, vjust=0),
+        axis.title.y=ggplot2::element_text(size=10, vjust=1.25),
+
+        # Plot margins
+        plot.margin = grid::unit(c(0.35, 0.2, 0.3, 0.35), "cm")
+      )
+  }
 
   #----------------------------------------------------------------------------
   # Now, compute the moment inequality test
   # Get correlation matrix implied by sigmahat
-  Cormat <- stats::cov2cor(Sigmahat)
 
-  # set seed for draws
-  if (base::is.null(seed)) {
-    s <- base::Sys.time()
+  if ( !test.option ) {
+    Cormat <- stats::cov2cor(Sigmahat)
+    # set seed for draws
+    if (base::is.null(seed)) {
+      s <- base::Sys.time()
+    } else {
+      s <- seed
+    }
+    base::set.seed(s)
+
+    muhat_test <- -implied_density
+    muhat_max  <- base::max(muhat_test/base::sqrt(base::diag(Sigmahat)))
+    sims       <- MASS::mvrnorm(n = numSims, mu = rep(0, n_unique_bin), Sigma = Cormat)
+    sims_max   <- base::apply(X = sims, MARGIN = 1, FUN = max)
+    p_value    <- base::mean( sims_max >=  muhat_max)
+    plot       <- implied_density_plot
+
+    # To have the outcome interval in the table of implied density
+    implied_density_table$level <- bin2
+    base::colnames(att) <- bin2
+
+    didFF_out <- base::list(
+      plot  = plot,
+      table = implied_density_table,
+      pval  = p_value,
+      att   = att
+    )
   } else {
-    s <- seed
+    didFF_out <- base::list(
+      test.estimates = point_estimates,
+      test.se = base::sqrt(base::diag(AsyVar)),
+      att   = att
+    )
   }
-  base::set.seed(s)
-
-  muhat_test <- -implied_density
-  muhat_max  <- base::max(muhat_test/base::sqrt(base::diag(Sigmahat)))
-  sims       <- MASS::mvrnorm(n = numSims, mu = rep(0, n_unique_bin), Sigma = Cormat)
-  sims_max   <- base::apply(X = sims, MARGIN = 1, FUN = max)
-  p_value    <- base::mean( sims_max >=  muhat_max)
-  plot       <- implied_density_plot
-
-  # To have the outcome interval in the table of implied density
-  implied_density_table$level <- bin2
-  colnames(att) <- bin2
-
-  didFF_out <- list(
-    plot  = plot,
-    table = implied_density_table,
-    pval  = p_value,
-    att   = att
-  )
 
   return(didFF_out)
 }
