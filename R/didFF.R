@@ -508,7 +508,7 @@ didFF <-function(
   } else {
     didFF_out <- base::list(
       test.estimates = point_estimates,
-      test.se = base::sqrt(base::diag(AsyVar)),
+      test.se = base::sqrt(base::diag(Sigmahat)),
       att   = att
     )
   }

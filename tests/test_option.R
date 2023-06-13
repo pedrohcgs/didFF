@@ -292,3 +292,12 @@ did::att_gt(
   cband                  = FALSE,
   base_period            = "universal"
 )
+
+result <- didFF(
+data   = data_filtered,
+yname  = yname,
+tname  = tname,
+idname = idname,
+gname  = gname,
+test.option=TRUE
+)
