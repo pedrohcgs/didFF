@@ -218,7 +218,7 @@ didFF <-function(
 
   # First do some sanity checks
   # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-  binsel <- (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
+  binsel <- if (test.option) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
   yvals  <- NULL
   nvals  <- Inf
   if(base::is.null(nbins) & base::is.null(binpoints)){
