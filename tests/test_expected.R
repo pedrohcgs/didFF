@@ -230,15 +230,19 @@ test_that("didFF does not depend on outcome values in treated periods", {
 # this is all hard-coded
 test_that("didFF recovers exact theoretical densities in discrete case", {
   for (i in 1:10) {
-    th  <- round(runif(1) * 0.6 + 0.2, 2)
+    th  <- round(runif(1) * 0.5 + 0.4, 2)
     Dt  <- 1:10
     Dd  <- 1:10
-    gt0 <- runif(length(Dt)) * 0.5 + 0.5
-    gt1 <- runif(length(Dt)) * 0.5 + 0.5
+    # gt0 <- runif(length(Dt)) * 0.5 + 0.5
+    # gt1 <- runif(length(Dt)) * 0.5 + 0.5
+    gt0 <- runif(length(Dt)) * 0.3 + 0.3
+    gt1 <- runif(length(Dt)) * 0.7 + 0.7
     gt0 <- round(gt0/sum(gt0), 2)
     gt1 <- round(gt1/sum(gt1), 2)
-    hd0 <- runif(length(Dd))
-    hd1 <- runif(length(Dd))
+    # hd0 <- runif(length(Dd))
+    # hd1 <- runif(length(Dd))
+    hd0 <- runif(length(Dt)) * 1.7 + 0.7
+    hd1 <- runif(length(Dt)) * 1.3 + 0.3
     hd0 <- round(hd0/sum(hd0), 2)
     hd1 <- round(hd1/sum(hd1), 2)
     p00 <- round(th * gt0 + (1-th) * hd0, 2)
@@ -297,11 +301,12 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     Fy[ti == 0 & di == 0] <- c(rep(Dt, gr0), rep(Dd, hr0))
     Fy[ti == 0 & di == 1] <- c(rep(Dt, gr0), rep(Dd, hr1))
     Fy[ti == 1 & di == 0] <- c(rep(Dt, gr1), rep(Dd, hr0))
-    Fy[ti == 1 & di == 1] <- c(rep(Dt, gr1), rep(Dd, hr1))
+    # Fy[ti == 1 & di == 1] <- c(rep(Dt, gr1), rep(Dd, hr1)) + 5
+    Fy[ti == 1 & di == 1] <- sample(1:10, size=sum(ti == 1 & di == 1), replace=T, prob=1:10)
 
     di[di == 0] <- Inf
     DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
-    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = c(0, sort(unique(Fy))))
+    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = c(0, 1:10))
     expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
 
     sel0 <- ti == 0 & di == Inf
@@ -320,6 +325,17 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     dfM[is.na(dfM[["F2"]]), "F2"] <- 0
     dfM <- dfM[order(dfM$y),]
     expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+
+    F_t1_d1_implied <- res$table$implied_density
+    F_t1_d1_actual  <- prop.table(table(Fy[ti == 1 & di == 1]))
+    res <- didFF(data        = DF,
+                 yname       = "y",
+                 tname       = "t",
+                 idname      = "i",
+                 gname       = "g",
+                 test.option = TRUE,
+                 binpoints   = 0:10)
+    expect_equal(as.vector(F_t1_d1_actual - F_t1_d1_implied), res$test.estimates, tol=.Machine$double.eps^(1/2))
   }
 })
 
