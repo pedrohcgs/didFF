@@ -242,11 +242,14 @@ didFF <-function(
     diffn  <- binpoints[base::length(binpoints)] - yrange[2]
     if( (diff1 > 0) & (base::abs(diff1) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(yrange[1], binpoints)
+      base::warning("binpoints don't cover the range of the outcome; padding at lower bound")
     }
     if( (diffn < 0) & (base::abs(diffn) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(binpoints, yrange[2])
+      base::warning("binpoints don't cover the range of the outcome; padding at upper bound")
     }
-    if( (diff1 < 0) & (diffn > 0) ){
+    diffm <- base::sum(binpoints <= yrange[1])
+    if( (binpoints[diffm] <= yrange[1]) & (yrange[2] <= binpoints[diffm+1]) ){
       base::stop("Provided binpoints group all values into single bin.")
     }
   }
