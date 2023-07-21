@@ -83,7 +83,7 @@
 #'  dynamic effects for.  By default, `max_e = Inf` so that effects at
 #'  all lfeasible event times are computed.
 #' @param distributionalTE Estimate the distributional treatment effects (the distribution 
-#'  of `Y(1)` minus the implied distribution of `Y(0)`, for the treated).
+#'  of `Y(1)` minus the implied distribution of `Y(0)`, for the treated). Default is FALSE.
 #' @param pl Whether or not to use parallel processing. Default is FALSE.
 #' @param cores The number of cores to use for parallel processing.
 #'  Only relevant if `pl = TRUE`.Default is `cores = parallel::detectCores()`.
