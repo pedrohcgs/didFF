@@ -37,7 +37,7 @@ seed                   = 0
 balance_e              = NULL
 min_e                  = -Inf
 max_e                  = Inf
-test.option            = TRUE
+distributionalTE       = TRUE
 
 #######################################################################
 #                                                                     #
@@ -143,7 +143,7 @@ DF <- did::pre_process_did(yname                  = yname,
 
 # First do some sanity checks
 # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-binsel <- if (test.option) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
+binsel <- if (distributionalTE) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
 yvals  <- NULL
 nvals  <- Inf
 if(base::is.null(nbins) & base::is.null(binpoints)){
@@ -210,11 +210,11 @@ point_estimates <- base::rep(NA, times = n_unique_bin)
 
 #----------------------------------------------------------------------------
 # Compute aggte from did package using each bin as outcome
-run_bin <- function(j, test.option=FALSE){
+run_bin <- function(j, distributionalTE=FALSE){
     outname <- base::paste0("outcome_bin", as.character(j))
 
     # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-    if ( test.option ) {
+    if ( distributionalTE ) {
       DF[[outname]] <- (bin == unique_bin[j])
     } else {
       DF[[outname]] <- -(bin == unique_bin[j])
@@ -267,9 +267,9 @@ run_bin <- function(j, test.option=FALSE){
 #                                                                     #
 #######################################################################
 
-results <- base::lapply(1:n_unique_bin, run_bin, test.option=FALSE)
+results <- base::lapply(1:n_unique_bin, run_bin, distributionalTE=FALSE)
 # error
-results <- base::lapply(1:n_unique_bin, run_bin, test.option=TRUE)
+results <- base::lapply(1:n_unique_bin, run_bin, distributionalTE=TRUE)
 
 j <- 1
 outname <- base::paste0("outcome_bin", as.character(j))
@@ -299,5 +299,5 @@ yname  = yname,
 tname  = tname,
 idname = idname,
 gname  = gname,
-test.option=TRUE
+distributionalTE=TRUE
 )

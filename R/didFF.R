@@ -82,6 +82,8 @@
 #' @param max_e For `aggte_type = "dynamic"`, this is the largest event time to compute
 #'  dynamic effects for.  By default, `max_e = Inf` so that effects at
 #'  all lfeasible event times are computed.
+#' @param distributionalTE Estimate the distributional treatment effects (the distribution 
+#'  of `Y(1)` minus the implied distribution of `Y(0)`, for the treated).
 #' @param pl Whether or not to use parallel processing. Default is FALSE.
 #' @param cores The number of cores to use for parallel processing.
 #'  Only relevant if `pl = TRUE`.Default is `cores = parallel::detectCores()`.
@@ -116,7 +118,7 @@ didFF <-function(
     balance_e              = NULL,
     min_e                  = -Inf,
     max_e                  = Inf,
-    test.option            = FALSE,
+    distributionalTE       = FALSE,
     pl                     = FALSE,
     cores                  = parallel::detectCores()
 ) {
@@ -218,7 +220,7 @@ didFF <-function(
 
   # First do some sanity checks
   # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-  binsel <- if (test.option) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
+  binsel <- if (distributionalTE) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
   yvals  <- NULL
   nvals  <- Inf
   if(base::is.null(nbins) & base::is.null(binpoints)){
@@ -288,11 +290,11 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Compute aggte from did package using each bin as outcome
-  run_bin <- function(j, test.option=FALSE){
+  run_bin <- function(j, distributionalTE=FALSE){
     outname <- base::paste0("outcome_bin", as.character(j))
 
     # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-    if ( test.option ) {
+    if ( distributionalTE ) {
       DF[[outname]] <- (bin == unique_bin[j])
     } else {
       DF[[outname]] <- -(bin == unique_bin[j])
@@ -373,12 +375,12 @@ didFF <-function(
                                   "max_e",
                                   "aggte_type"),
                             envir=environment())
-    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin, test.option=test.option)
+    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin, distributionalTE=distributionalTE)
     # doParallel::registerDoParallel(cl)
     # results <- foreach::foreach(j=1:n_unique_bin) %dopar% run_bin(j)
     parallel::stopCluster(cl)
   } else {
-    results <- base::lapply(1:n_unique_bin, run_bin, test.option=test.option)
+    results <- base::lapply(1:n_unique_bin, run_bin, distributionalTE=distributionalTE)
   }
   point_estimates <- base::unlist(base::lapply(results, function(x) x$aggt_param$overall.att))
   inf_function    <- base::do.call(base::cbind, base::lapply(results, get_inf))
@@ -430,7 +432,7 @@ didFF <-function(
   #----------------------------------------------------------------------------
   # Prepare data for plots
 
-  if ( !test.option ) {
+  if ( !distributionalTE ) {
     lb_graph <- base::min(unique_level_orig)
     ub_graph <- base::max(unique_level_orig)
 
@@ -481,7 +483,7 @@ didFF <-function(
   # Now, compute the moment inequality test
   # Get correlation matrix implied by sigmahat
 
-  if ( !test.option ) {
+  if ( !distributionalTE ) {
     Cormat <- stats::cov2cor(Sigmahat)
     # set seed for draws
     if (base::is.null(seed)) {

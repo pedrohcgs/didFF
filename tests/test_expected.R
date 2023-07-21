@@ -333,13 +333,22 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
 
     F_t1_d1_implied <- res$table$implied_density
     F_t1_d1_actual  <- prop.table(table(Fy[ti == 1 & di == 1]))
-    res <- didFF(data        = DF,
-                 yname       = "y",
-                 tname       = "t",
-                 idname      = "i",
-                 gname       = "g",
-                 test.option = TRUE,
-                 binpoints   = 0:15)
+    if ( runif(1) > 0.5 ) {
+        res <- didFF(data             = DF,
+                     yname            = "y",
+                     tname            = "t",
+                     idname           = "i",
+                     gname            = "g",
+                     distributionalTE = TRUE,
+                     binpoints        = 0:15)
+    } else {
+        res <- distDD(data             = DF,
+                      yname            = "y",
+                      tname            = "t",
+                      idname           = "i",
+                      gname            = "g",
+                      binpoints        = 0:15)
+    }
     if ( pad ) {
         expect_equal(as.vector(c(rep(0, 5), F_t1_d1_actual) - c(F_t1_d1_implied, rep(0, 5))), res$test.estimates, tol=.Machine$double.eps^(1/2))
     } else {
