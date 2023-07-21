@@ -339,7 +339,7 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
                      tname            = "t",
                      idname           = "i",
                      gname            = "g",
-                     distributionalTE = TRUE,
+                     distDD           = TRUE,
                      binpoints        = 0:15)
     } else {
         res <- distDD(data             = DF,
