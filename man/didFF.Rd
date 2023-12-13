@@ -22,10 +22,13 @@ didFF(
   binpoints = NULL,
   numSims = 1e+05,
   seed = 0,
+  lb_graph = NULL,
+  ub_graph = NULL,
   aggte_type = "group",
   balance_e = NULL,
   min_e = -Inf,
   max_e = Inf,
+  distDD = FALSE,
   pl = FALSE,
   cores = parallel::detectCores()
 )
@@ -112,6 +115,10 @@ test. Default \code{numSims=100000}.}
 
 \item{seed}{Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.}
 
+\item{lb_graph}{For display only; smallest bin to be plotted.}
+
+\item{ub_graph}{For display only; largest bin to be plotted.}
+
 \item{aggte_type}{Which type of (scalar) aggregated treatment effect parameter to compute.
 Options are "simple", "dynamic", "group", and "calendar". Default is \code{group}.}
 
@@ -130,15 +137,20 @@ all feasible event times are computed.}
 dynamic effects for.  By default, \code{max_e = Inf} so that effects at
 all lfeasible event times are computed.}
 
+\item{distDD}{Estimate the distributional treatment effects (the distribution
+of \code{Y(1)} minus the implied distribution of \code{Y(0)}, for the treated). Default is FALSE.
+The function distDD is provided as a wrapper for \code{distDD=TRUE}.}
+
 \item{pl}{Whether or not to use parallel processing. Default is FALSE.}
 
 \item{cores}{The number of cores to use for parallel processing.
 Only relevant if \code{pl = TRUE}.Default is \code{cores = parallel::detectCores()}.}
 }
 \value{
-A list object containing the plot of the
-implied density under the null, a table with the estimated and
-implied densities, and the p-value for H0= Implied Density>=0.
+A list object containing: The plot of the
+implied density under the null; a table with the estimated and
+implied densities, and the p-value for H0= Implied Density>=0;
+the average treatment effects.
 }
 \description{
 Test if Parallel trends assumption is sensitive to functional form

@@ -1,10 +1,10 @@
 #'  County Teen Employment Dataset
-
-#'  A dataset containing (the log of) teen employment in 500 counties
-#'  in the U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway and
-#'  Sant'Anna (2021).  See that paper for additional descriptions.
 #'
-#' @format A data frame with 2500 rows and 5 variables:
+#'  A dataset containing (the log of) teen employment in 500 counties in the
+#'  U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway
+#'  and Sant'Anna (2021).  See that paper for additional descriptions.
+#'
+#' @format A data frame with 2500 rows and 6 variables:
 #' \describe{
 #'   \item{year}{the year of the observation}
 #'   \item{countyreal}{a unique identifier for a particular county}

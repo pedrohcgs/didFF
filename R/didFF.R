@@ -11,10 +11,6 @@
 #'  in the ``never-treated'' group.
 #' @param weightsname The name of the column containing the sampling weights.
 #'  If not set, all observations have the same weight (Default is NULL).
-# @param clustervars A vector of variables names to cluster on.  At most, there
-#  can be two variables (otherwise will throw an error) and one of these
-#  must be the same as idname which allows for clustering at the unit
-#  level. By default, we cluster at unit level.
 #' @param est_method the method to compute group-time average treatment effects.
 #'  The default is "dr" which uses the doubly robust
 #' approach in the `DRDID` package.  Other built-in methods
@@ -68,6 +64,8 @@
 #' @param numSims Number of simulation draws to compute p-value for moment inequality
 #' test. Default `numSims=100000`.
 #' @param seed Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.
+#' @param lb_graph For display only; smallest bin to be plotted.
+#' @param ub_graph For display only; largest bin to be plotted.
 #' @param aggte_type Which type of (scalar) aggregated treatment effect parameter to compute.
 #' Options are "simple", "dynamic", "group", and "calendar". Default is `group`.
 #' @param balance_e If set (and if `aggte_type = "dynamic"`), it balances
@@ -88,9 +86,10 @@
 #' @param pl Whether or not to use parallel processing. Default is FALSE.
 #' @param cores The number of cores to use for parallel processing.
 #'  Only relevant if `pl = TRUE`.Default is `cores = parallel::detectCores()`.
-#' @return A list object containing the plot of the
-#'  implied density under the null, a table with the estimated and
-#'  implied densities, and the p-value for H0= Implied Density>=0.
+#' @return A list object containing: The plot of the
+#'  implied density under the null; a table with the estimated and
+#'  implied densities, and the p-value for H0= Implied Density>=0;
+#'  the average treatment effects.
 #' @export
 #'
 
@@ -113,8 +112,8 @@ didFF <-function(
     binpoints              = NULL,
     numSims                = 100000,
     seed                   = 0,
-    #lb_graph              = NULL,
-    #ub_graph              = NULL,
+    lb_graph               = NULL,
+    ub_graph               = NULL,
     aggte_type             = "group",
     balance_e              = NULL,
     min_e                  = -Inf,
@@ -264,9 +263,10 @@ didFF <-function(
     base::warning("treating outcome as discrete; pass nbins or binpoints to modify this behavior")
   } else {
     bins <- base::cut(DF[binsel, yname],
-                      breaks = if (base::is.null(nbins)) binpoints else nbins,
+                      breaks         = if (base::is.null(nbins)) binpoints else nbins,
                       include.lowest = TRUE,
-                      labels = NULL)
+                      labels         = NULL,
+                      dig.lab        = 21)
   }
   bin[binsel] <- base::as.numeric(bins)
   bin2 <- base::levels(base::droplevels(bins))
@@ -434,12 +434,12 @@ didFF <-function(
   # Prepare data for plots
 
   if ( !distDD ) {
-    lb_graph <- base::min(unique_level_orig)
-    ub_graph <- base::max(unique_level_orig)
+    if ( base::is.null(lb_graph) ) lb_graph <- base::min(unique_level_orig)
+    if ( base::is.null(ub_graph) ) ub_graph <- base::max(unique_level_orig)
 
     #Outcome = NULL
     plotTable <- implied_density_table %>%
-      #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
+      dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
       dplyr::mutate(Outcome = level) %>%
       dplyr::mutate(
         `Implied Density` = base::ifelse(implied_density < 0,
@@ -447,10 +447,10 @@ didFF <-function(
                                          "Non-negative"))
     #`Implied Density` <- NULL
     basic_plot<- plotTable %>%
-      ggplot2::ggplot(ggplot2::aes(x=Outcome,
-                                   y = implied_density,
+      ggplot2::ggplot(ggplot2::aes(x = .data$Outcome,
+                                   y = .data$implied_density,
                                    # fill = c)) +
-                                   fill = `Implied Density`)) +
+                                   fill = .data$`Implied Density`)) +
       ggplot2::geom_bar(stat = "identity") +
       ggplot2::xlab("Outcome") +
       ggplot2::ylab("Implied Density")
@@ -512,9 +512,14 @@ didFF <-function(
       att   = att
     )
   } else {
-    didFF_out <- base::list(
+    implied_dist_table <- base::data.frame(
+      level          = bin2,
       test.estimates = point_estimates,
-      test.se = base::sqrt(base::diag(Sigmahat)),
+      test.se        = base::sqrt(base::diag(Sigmahat))
+    )
+
+    didFF_out <- base::list(
+      table = implied_dist_table,
       att   = att
     )
   }

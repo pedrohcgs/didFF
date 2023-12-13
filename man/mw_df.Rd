@@ -3,12 +3,9 @@
 \docType{data}
 \name{mw_df}
 \alias{mw_df}
-\title{County Teen Employment Dataset
-A dataset containing (the log of) teen employment in 500 counties
-in the U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway and
-Sant'Anna (2021).  See that paper for additional descriptions.}
+\title{County Teen Employment Dataset}
 \format{
-A data frame with 2500 rows and 5 variables:
+A data frame with 2500 rows and 6 variables:
 \describe{
 \item{year}{the year of the observation}
 \item{countyreal}{a unique identifier for a particular county}
@@ -28,9 +25,8 @@ Callaway and Sant'Anna (2021)
 mw_df
 }
 \description{
-County Teen Employment Dataset
-A dataset containing (the log of) teen employment in 500 counties
-in the U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway and
-Sant'Anna (2021).  See that paper for additional descriptions.
+A dataset containing (the log of) teen employment in 500 counties in the
+U.S. from 2003 to 2007.  This is a subset of the dataset used in Callaway
+and Sant'Anna (2021).  See that paper for additional descriptions.
 }
 \keyword{datasets}
