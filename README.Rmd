@@ -92,7 +92,8 @@ test_2007_2015 <- didFF(
   binpoints   = sort(unique(mw_df_2007_2015$wagebins)),
   allow_unbalanced_panel = TRUE,
   lb_graph    = 5,
-  ub_graph    = 29.75
+  ub_graph    = 29.75,
+  seed        = 1
 )
 
 test_2007_2015$plot
@@ -131,7 +132,8 @@ test_2010_2015 <- didFF(
   binpoints   = sort(unique(mw_df_2010_2015$wagebins)),
   allow_unbalanced_panel = TRUE,
   lb_graph    = 5,
-  ub_graph    = 29.75
+  ub_graph    = 29.75,
+  seed        = 1
 )
 
 test_2010_2015$plot
@@ -152,7 +154,8 @@ dist_2007_2015 <- distDD(
   weightsname = "wgt",
   est_method  = "reg",
   binpoints   = sort(unique(mw_df_2007_2015$wagebins)),
-  allow_unbalanced_panel = TRUE
+  allow_unbalanced_panel = TRUE,
+  seed        = 1
 )
 
 head(dist_2007_2015$table)

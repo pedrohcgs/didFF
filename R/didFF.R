@@ -80,7 +80,7 @@
 #' @param max_e For `aggte_type = "dynamic"`, this is the largest event time to compute
 #'  dynamic effects for.  By default, `max_e = Inf` so that effects at
 #'  all lfeasible event times are computed.
-#' @param distDD Estimate the distributional treatment effects (the distribution 
+#' @param distDD Estimate the distributional treatment effects (the distribution
 #'  of `Y(1)` minus the implied distribution of `Y(0)`, for the treated). Default is FALSE.
 #'  The function distDD is provided as a wrapper for `distDD=TRUE`.
 #' @param pl Whether or not to use parallel processing. Default is FALSE.

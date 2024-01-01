@@ -12,11 +12,11 @@ tests](https://github.com/pedrohcgs/didFF/actions/workflows/tests.yml/badge.svg)
 The `didFF` R package assesses when the validity of
 difference-in-differences and related estimators depends on functional
 form, based on the theoretical results in [Roth and Sant’Anna
-(2023)](https://jonathandroth.github.io/assets/files/2010.04814.pdf).
-This package provides a test for whether parallel trends is insensitive
-to functional form by estimating the implied density of potential
-outcomes under the null and checking if it is significantly below zero
-at some point.
+(2023)](https://www.jonathandroth.com/assets/files/2010.04814.pdf). This
+package provides a test for whether parallel trends is insensitive to
+functional form by estimating the implied density of potential outcomes
+under the null and checking if it is significantly below zero at some
+point.
 
 ## Installation
 
@@ -35,7 +35,7 @@ remotes::install_github("pedrohcgs/didFF")
 
 We now provide and example of how to use the package using the empirical
 illustration from [Roth and Sant’Anna (2023,
-p. 743–744)](https://jonathandroth.github.io/assets/files/2010.04814.pdf).
+p. 743–744)](https://www.jonathandroth.com/assets/files/2010.04814.pdf).
 
 ## Loading the package and the data
 
@@ -125,7 +125,8 @@ test_2007_2015 <- didFF(
   binpoints   = sort(unique(mw_df_2007_2015$wagebins)),
   allow_unbalanced_panel = TRUE,
   lb_graph    = 5,
-  ub_graph    = 29.75
+  ub_graph    = 29.75,
+  seed        = 1
 )
 #> Warning in didFF(data = mw_df_2007_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
@@ -138,7 +139,7 @@ test_2007_2015$plot
 
 ``` r
 test_2007_2015$pval
-#> [1] 0
+#> [1] 1e-05
 ```
 
 The plot shows the implied counterfactual density for the treated group
@@ -191,7 +192,8 @@ test_2010_2015 <- didFF(
   binpoints   = sort(unique(mw_df_2010_2015$wagebins)),
   allow_unbalanced_panel = TRUE,
   lb_graph    = 5,
-  ub_graph    = 29.75
+  ub_graph    = 29.75,
+  seed        = 1
 )
 #> Warning in didFF(data = mw_df_2010_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
@@ -204,7 +206,7 @@ test_2010_2015$plot
 
 ``` r
 test_2010_2015$pval
-#> [1] 0.33152
+#> [1] 0.33098
 ```
 
 ## Distributional Treatement Effects
@@ -223,7 +225,8 @@ dist_2007_2015 <- distDD(
   weightsname = "wgt",
   est_method  = "reg",
   binpoints   = sort(unique(mw_df_2007_2015$wagebins)),
-  allow_unbalanced_panel = TRUE
+  allow_unbalanced_panel = TRUE,
+  seed        = 1
 )
 #> Warning in didFF(..., distDD = TRUE): You have observations with g=0 and all
 #> time periods t>0; assuming the g=0 cohort is never-treated.
