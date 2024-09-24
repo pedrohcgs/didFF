@@ -122,9 +122,9 @@ didFF <-function(
     pl                     = FALSE,
     cores                  = parallel::detectCores()
 ) {
-  if ( !exists(".Random.seed") ) stats::runif(1)
-  rseed.cached <- .Random.seed
-  base::on.exit({.Random.seed <<- rseed.cached})
+  if ( !base::exists(".Random.seed", .GlobalEnv) ) stats::runif(1)
+  rseed.cached <- base::get(".Random.seed", .GlobalEnv)
+  base::on.exit({base::assign(".Random.seed", rseed.cached, .GlobalEnv)})
   #----------------------------------------------------------------------------
   # Store data as DF
   DF <- as.data.frame(data)
