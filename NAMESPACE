@@ -3,4 +3,5 @@
 export("%>%")
 export(didFF)
 export(distDD)
+export(Cengiz_df)
 importFrom(magrittr,"%>%")
