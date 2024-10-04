@@ -17,6 +17,5 @@
 #'   \item{treat}{whether or not a particular county is treated in that year}
 #' }
 #' @source Callaway and Sant'Anna (2021)
-#' @export
 "mw_df"
 
