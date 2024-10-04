@@ -296,9 +296,9 @@ didFF <-function(
 
     # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
     if ( distDD ) {
-      DF[[outname]] <- (bin == unique_bin[j])
+      DF[[outname]] <- 1*(bin == unique_bin[j])
     } else {
-      DF[[outname]] <- -(bin == unique_bin[j])
+      DF[[outname]] <- -1*(bin == unique_bin[j])
       DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
     }
     out_bins <- base::suppressMessages(
