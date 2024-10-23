@@ -17,5 +17,9 @@
 #'   \item{treat}{whether or not a particular county is treated in that year}
 #' }
 #' @source Callaway and Sant'Anna (2021)
+#' @references
+#'  \cite{Callaway, Brantly and Sant'Anna, Pedro H. C. (2021),
+#' "Difference-in-Differences with Multiple Time Periods."
+#'  Journal of Econometrics, vol. 225 (2), pp. 200-230, \doi{10.1016/j.jeconom.2020.12.001}}
 "mw_df"
 

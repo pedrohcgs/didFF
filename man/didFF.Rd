@@ -72,10 +72,8 @@ as repeated cross sections.}
 
 \item{allow_unbalanced_panel}{Whether or not function should
 "balance" the panel with respect to time and id.  The default
-values if \code{FALSE} which means that \code{\link[=att_gt]{att_gt()}} will drop
-all units where data is not observed in all periods.
-The advantage of this is that the computations are faster
-(sometimes substantially).}
+value is \code{FALSE} which means that \code{\link[=att_gt]{att_gt()}} will drop
+all units where data is not observed in all periods.}
 
 \item{nevertreated}{A scalar indicating never treated cohort. If any cohorts are equal to 0
 and all time periods are above 0, then the 0 cohort is taken as never-treated by default;
@@ -154,4 +152,9 @@ the average treatment effects.
 }
 \description{
 Test if Parallel trends assumption is sensitive to functional form
+}
+\references{
+\cite{Roth, Jonathan and Sant'Anna, Pedro H. C. (2023),
+"When is Parallel Trends Sensitive to Functional Form?"
+Econometrica, vol. 91 (2), pp. 737–747, \doi{10.3982/ECTA19402}}
 }

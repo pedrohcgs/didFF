@@ -7,6 +7,7 @@
 #'
 #' @return A list object containing: The average treatment effects; a
 #'   table with the estimated distributional TE, their SE, and bin levels.
+#' @param ... Arguments passed to `didFF`.
 #' @export
 #'
 

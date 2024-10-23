@@ -1,4 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 R/line_by_line_checks.R
-.github
+data-raw
+^LICENSE\.md$
+README\.Rmd
+^\.github$
+^pkgdown$
+^docs$

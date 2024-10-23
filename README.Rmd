@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 ![Unit and build tests](https://github.com/pedrohcgs/didFF/actions/workflows/tests.yml/badge.svg)
 <!-- badges: end -->
 
-The `didFF` R package assesses when the validity of difference-in-differences and related estimators depends on functional form, based on the theoretical results in [Roth and Sant’Anna (2023)](https://www.jonathandroth.com/assets/files/2010.04814.pdf). This package provides a test for whether parallel trends is insensitive to functional form by estimating the implied density of potential outcomes under the null and checking if it is significantly below zero at some point.
+The `didFF` R package assesses when the validity of difference-in-differences and related estimators depends on functional form, based on the theoretical results in [Roth and Sant’Anna (2023)](https://doi.org/10.3982/ECTA19402). This package provides a test for whether parallel trends is insensitive to functional form by estimating the implied density of potential outcomes under the null and checking if it is significantly below zero at some point.
 
 ## Installation
 
@@ -36,13 +36,13 @@ remotes::install_github("pedrohcgs/didFF")
 
 ## Example
 
-We now provide and example of how to use the package using the empirical illustration from [Roth and Sant’Anna (2023, p. 743–744)](https://www.jonathandroth.com/assets/files/2010.04814.pdf).
+We now provide and example of how to use the package using the empirical illustration from [Roth and Sant’Anna (2023, p. 743–744)](https://doi.org/10.3982/ECTA19402).
 
 ## Loading the package and the data
 
 We first load the package and the data.
 
-```{r example, results='hide'}
+```{r example, results='hide', warning = FALSE, message = FALSE}
 # Load didFF and other auxiliary libraries for data manipulation
 library(didFF)
 library(tidyverse) 
@@ -102,7 +102,7 @@ test_2007_2015$pval
 
 The plot shows the implied counterfactual density for the treated group if parallel trends holds for all functional forms of the outcome, which Roth and Sant'Anna show is equivalent to "parallel trends of distributions". (To preserve reasonable scaling, we use the options `lb_graph` and `ub_graph` so that the plot shows only wages above 5 and below 30). The figure shows that the implied density is negative for wages between approximately \$5-7/hour.
 
-The plot also shows a formal p-value for the null hypothesis that parallel trends holds for all functional forms (this is calculated using a “least-favorable” critical value for moment inequalities, as in, e.g., Section 4.1.1 of [Canay and Shaikh (2017)](https://www.econstor.eu/bitstream/10419/130095/1/846741482.pdf)). The test shows that we are able to reject the null hypothesis that all of the implied densities are positive (p\<0.001). We thus reject the null that parallel trends hold for all functional forms of the outcome.
+The plot also shows a formal p-value for the null hypothesis that parallel trends holds for all functional forms (this is calculated using a “least-favorable” critical value for moment inequalities, as in, e.g., Section 4.1.1 of [Canay and Shaikh (2017)](https://doi.org/10.1017/9781108227223.009)). The test shows that we are able to reject the null hypothesis that all of the implied densities are positive (p\<0.001). We thus reject the null that parallel trends hold for all functional forms of the outcome.
 
 ## Testing Functional Form for DiD between 2010 and 2015
 

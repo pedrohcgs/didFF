@@ -12,11 +12,10 @@ tests](https://github.com/pedrohcgs/didFF/actions/workflows/tests.yml/badge.svg)
 The `didFF` R package assesses when the validity of
 difference-in-differences and related estimators depends on functional
 form, based on the theoretical results in [Roth and Sant’Anna
-(2023)](https://www.jonathandroth.com/assets/files/2010.04814.pdf). This
-package provides a test for whether parallel trends is insensitive to
-functional form by estimating the implied density of potential outcomes
-under the null and checking if it is significantly below zero at some
-point.
+(2023)](https://doi.org/10.3982/ECTA19402). This package provides a test
+for whether parallel trends is insensitive to functional form by
+estimating the implied density of potential outcomes under the null and
+checking if it is significantly below zero at some point.
 
 ## Installation
 
@@ -35,7 +34,7 @@ remotes::install_github("pedrohcgs/didFF")
 
 We now provide and example of how to use the package using the empirical
 illustration from [Roth and Sant’Anna (2023,
-p. 743–744)](https://www.jonathandroth.com/assets/files/2010.04814.pdf).
+p. 743–744)](https://doi.org/10.3982/ECTA19402).
 
 ## Loading the package and the data
 
@@ -45,16 +44,6 @@ We first load the package and the data.
 # Load didFF and other auxiliary libraries for data manipulation
 library(didFF)
 library(tidyverse) 
-#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#> ✔ dplyr     1.1.3.9000     ✔ readr     2.1.4     
-#> ✔ forcats   1.0.0          ✔ stringr   1.5.0     
-#> ✔ ggplot2   3.4.4.9000     ✔ tibble    3.2.1     
-#> ✔ lubridate 1.9.3          ✔ tidyr     1.3.0     
-#> ✔ purrr     1.0.2          
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(dplyr)
 
 mw_df<-didFF::Cengiz_df #load Cengiz et al. (2019) data frame
@@ -131,6 +120,7 @@ test_2007_2015 <- didFF(
 #> Warning in didFF(data = mw_df_2007_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
 #> the g=0 cohort is never-treated.
+#> You have an unbalanced panel. Proceeding as such.
 
 test_2007_2015$plot
 ```
@@ -139,7 +129,7 @@ test_2007_2015$plot
 
 ``` r
 test_2007_2015$pval
-#> [1] 1e-05
+#> [1] 0
 ```
 
 The plot shows the implied counterfactual density for the treated group
@@ -154,10 +144,10 @@ The plot also shows a formal p-value for the null hypothesis that
 parallel trends holds for all functional forms (this is calculated using
 a “least-favorable” critical value for moment inequalities, as in, e.g.,
 Section 4.1.1 of [Canay and Shaikh
-(2017)](https://www.econstor.eu/bitstream/10419/130095/1/846741482.pdf)).
-The test shows that we are able to reject the null hypothesis that all
-of the implied densities are positive (p\<0.001). We thus reject the
-null that parallel trends hold for all functional forms of the outcome.
+(2017)](https://doi.org/10.1017/9781108227223.009)). The test shows that
+we are able to reject the null hypothesis that all of the implied
+densities are positive (p\<0.001). We thus reject the null that parallel
+trends hold for all functional forms of the outcome.
 
 ## Testing Functional Form for DiD between 2010 and 2015
 
@@ -198,6 +188,7 @@ test_2010_2015 <- didFF(
 #> Warning in didFF(data = mw_df_2010_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
 #> the g=0 cohort is never-treated.
+#> You have an unbalanced panel. Proceeding as such.
 
 test_2010_2015$plot
 ```
@@ -206,7 +197,7 @@ test_2010_2015$plot
 
 ``` r
 test_2010_2015$pval
-#> [1] 0.33098
+#> [1] 0.3317
 ```
 
 ## Distributional Treatement Effects
@@ -230,6 +221,7 @@ dist_2007_2015 <- distDD(
 )
 #> Warning in didFF(..., distDD = TRUE): You have observations with g=0 and all
 #> time periods t>0; assuming the g=0 cohort is never-treated.
+#> You have an unbalanced panel. Proceeding as such.
 
 head(dist_2007_2015$table)
 #>        level test.estimates      test.se

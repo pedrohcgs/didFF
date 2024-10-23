@@ -6,6 +6,9 @@
 \usage{
 distDD(...)
 }
+\arguments{
+\item{...}{Arguments passed to \code{didFF}.}
+}
 \value{
 A list object containing: The average treatment effects; a
 table with the estimated distributional TE, their SE, and bin levels.

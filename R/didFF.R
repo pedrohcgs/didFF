@@ -29,10 +29,8 @@
 #'  as repeated cross sections.
 #' @param allow_unbalanced_panel Whether or not function should
 #'  "balance" the panel with respect to time and id.  The default
-#'  values if `FALSE` which means that [att_gt()] will drop
+#'  value is `FALSE` which means that [att_gt()] will drop
 #'  all units where data is not observed in all periods.
-#'  The advantage of this is that the computations are faster
-#'  (sometimes substantially).
 #' @param nevertreated A scalar indicating never treated cohort. If any cohorts are equal to 0
 #'   and all time periods are above 0, then the 0 cohort is taken as never-treated by default;
 #'   otherwise the default is Inf.
@@ -90,6 +88,10 @@
 #'  implied density under the null; a table with the estimated and
 #'  implied densities, and the p-value for H0= Implied Density>=0;
 #'  the average treatment effects.
+#' @references
+#' \cite{Roth, Jonathan and Sant'Anna, Pedro H. C. (2023),
+#' "When is Parallel Trends Sensitive to Functional Form?"
+#'  Econometrica, vol. 91 (2), pp. 737–747, \doi{10.3982/ECTA19402}}
 #' @export
 #'
 

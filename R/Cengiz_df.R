@@ -18,5 +18,14 @@
 #'   \item{population}{State population}
 #' }
 #' @source Roth and Sant'Anna (2023)
+#' @references
+#' \cite{Cengiz, Doruk, Dube, Arindrajit, Lindner, Attila and Zipperer, Ben (2019).
+#' "The Effect of Minimum Wages on Low-Wage Jobs."
+#'  The Quarterly Journal of Economics, vol. 134 (3), pp. 1405–1454, \doi{10.1093/qje/qjz014}}
+#'
+#'
+#' \cite{Roth, Jonathan and Sant'Anna, Pedro H. C. (2023),
+#' "When is Parallel Trends Sensitive to Functional Form?"
+#'  Econometrica, vol. 91 (2), pp. 737–747, \doi{10.3982/ECTA19402}}
 "Cengiz_df"
 

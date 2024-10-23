@@ -312,7 +312,7 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     di[di == 0] <- Inf
     DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
     res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = 0:10)
-    expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
+   expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
 
     sel0 <- ti == 0 & di == Inf
     sel1 <- ti == 0 & di == 1
@@ -329,7 +329,7 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     dfM[is.na(dfM[["F1"]]), "F1"] <- 0
     dfM[is.na(dfM[["F2"]]), "F2"] <- 0
     dfM <- dfM[order(dfM$y),]
-    expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+   expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
 
     F_t1_d1_implied <- res$table$implied_density
     F_t1_d1_actual  <- prop.table(table(Fy[ti == 1 & di == 1]))
@@ -350,9 +350,9 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
                       binpoints        = 0:15)
     }
     if ( pad ) {
-        expect_equal(as.vector(c(rep(0, 5), F_t1_d1_actual) - c(F_t1_d1_implied, rep(0, 5))), res$test.estimates, tol=.Machine$double.eps^(1/2))
+     expect_equal(as.vector(c(rep(0, 5), F_t1_d1_actual) - c(F_t1_d1_implied, rep(0, 5))), res$table$test.estimates, tol=.Machine$double.eps^(1/2))
     } else {
-        expect_equal(as.vector(F_t1_d1_actual - F_t1_d1_implied), res$test.estimates, tol=.Machine$double.eps^(1/2))
+     expect_equal(as.vector(F_t1_d1_actual - F_t1_d1_implied), res$table$test.estimates, tol=.Machine$double.eps^(1/2))
     }
   }
 })
