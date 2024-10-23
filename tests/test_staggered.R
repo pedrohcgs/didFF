@@ -27,7 +27,7 @@ stagtest_genbalanced <- function(ni, nt, offset=123, frac.never=0.3) {
   dat$g <- ave(dat$g, dat$i, FUN = function(x) ceiling(x[length(x)]))
   dat$y <- as.numeric(dat$t >= dat$g) + rnorm(ni * nt, sd = 3)
   dat$w <- abs(as.numeric(dat$t <= dat$g) + rnorm(ni * nt, sd = 3)) + 0.1
-  dat[dat$i <= ceiling(frac.never * ni), "g"] <- -1
+  dat[dat$i <= ceiling(frac.never * ni), "g"] <- 0
   dat[order(dat$i, dat$t),]
 }
 
@@ -51,7 +51,7 @@ stagtest_genasync <- function(ni, nt, offset=123, frac.never=0.3) {
   dat$y <- as.numeric(dat$t >= dat$g) + rnorm(sum(Nt), sd = 3)
   dat$w <- abs(as.numeric(dat$t <= dat$g) + rnorm(sum(Nt), sd = 3)) + 0.1
 
-  dat[dat$i <= ceiling(frac.never * ni), "g"] <- -1
+  dat[dat$i <= ceiling(frac.never * ni), "g"] <- 0
   dat[order(dat$i, dat$t),]
 }
 
