@@ -95,7 +95,7 @@ mw_df_2007_2015 <-
   dplyr::filter((start_t <= year) & (year <= end_t)) %>% 
   dplyr::group_by(statenum) %>%
   # Create group variable that take value end_t if state was ever treated in this period, and 0 otherwise
-  dplyr::mutate(group = max(treated_quarter > 0,na.rm=T)*end_t) %>% 
+  dplyr::mutate(group = max(treated_quarter > 0, na.rm=TRUE)*end_t) %>% 
   #filter data back to pre and post periods only
   dplyr::filter((year == start_t) | (year == end_t)) %>%
   dplyr::group_by(statenum, wagebins) %>%
@@ -164,7 +164,7 @@ mw_df_2010_2015 <-
   mw_df %>%
   dplyr::filter((start_t <= year) & (year <= end_t)) %>%
   dplyr::group_by(statenum) %>%
-  dplyr::mutate(group = max(treated_quarter > 0,na.rm=T)*end_t) %>%
+  dplyr::mutate(group = max(treated_quarter > 0,na.rm=TRUE)*end_t) %>%
   dplyr::filter((year == start_t) | (year == end_t)) %>%
   dplyr::group_by(statenum, wagebins) %>%
   dplyr::mutate(wagebins=wagebins/100, wgt=overallcountpc*population) %>%
@@ -197,7 +197,7 @@ test_2010_2015$plot
 
 ``` r
 test_2010_2015$pval
-#> [1] 0.3317
+#> [1] 0.33275
 ```
 
 ## Distributional Treatement Effects
