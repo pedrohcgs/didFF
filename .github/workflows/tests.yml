@@ -37,5 +37,6 @@ jobs:
     - name: Check build
       run: |
         devtools::document()
+        devtools::build()
         devtools::check()
       shell: Rscript {0}

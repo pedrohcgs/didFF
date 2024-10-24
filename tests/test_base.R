@@ -15,7 +15,7 @@ data_filtered = subset(data_filtered, first.treat == cohort | first.treat == 0)
 
 # Recode first.treat ==0 to first.treat==Inf
 data_filtered$first.treat[data_filtered$first.treat == 0] <- Inf
-data_filtered$weights <- sample(1:4, NROW(data_filtered), replace=T)
+data_filtered$weights <- sample(1:4, NROW(data_filtered), replace=TRUE)
 
 # Parameters for the function
 yname                  = "lemp"
@@ -49,7 +49,8 @@ bins = base::cut(data_bins[[yname]],
                  include.lowest = TRUE,
                  labels = NULL)
 binpoints = base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
-
+binpoints =  sort(binpoints)
+binpoints = c(range(data_bins[[yname]])[1], binpoints)
 # Run the test
 test_that("didFF base run with no errors", {
   result <- didFF(
@@ -63,127 +64,147 @@ test_that("didFF base run with no errors", {
 })
 
 test_that("didFF base options run with no errors", {
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    weightsname = "weights"
-  )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    est_method = "dr"
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      weightsname = "weights"
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    xformla = ~ lpop
+
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      est_method = "dr"
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    panel  = FALSE
+
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      xformla = ~ lpop
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
+
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      panel  = FALSE
+    )
+  )
+
+  expect_silent(
+    didFF(
     data   = data_filtered,
     yname  = yname,
     tname  = tname,
     idname = idname,
     gname  = gname,
     allow_unbalanced_panel = TRUE
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    control_group = "notyettreated"
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      control_group = "notyettreated"
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    nbins  = 50
+
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      nbins  = 50
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
+  expect_silent(
+    didFF(
     data   = data_filtered,
     yname  = yname,
     tname  = tname,
     idname = idname,
     gname  = gname,
     binpoints = binpoints
+    )
   )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    numSims = 100
-  )
-  expect_silent(result)
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    seed   = 1729
-  )
-  expect_silent(result)
 
-  types <- c("simple", "dynamic", "group", "calendar")
-  for(type in types) {
-    result <- didFF(
+  expect_silent(
+    didFF(
       data   = data_filtered,
       yname  = yname,
       tname  = tname,
       idname = idname,
       gname  = gname,
-      aggte_type = type
+      numSims = 100
     )
-    expect_silent(result)
+  )
+
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      seed   = 1729
+    )
+  )
+
+  types <- c("simple", "dynamic", "group", "calendar")
+  for(type in types) {
+
+    expect_silent(
+      didFF(
+        data   = data_filtered,
+        yname  = yname,
+        tname  = tname,
+        idname = idname,
+        gname  = gname,
+        aggte_type = type
+      )
+    )
   }
 
-  result <- didFF(
-    data   = data_filtered,
-    yname  = yname,
-    tname  = tname,
-    idname = idname,
-    gname  = gname,
-    pl     = TRUE,
-    cores  = 2
+  expect_silent(
+    didFF(
+      data   = data_filtered,
+      yname  = yname,
+      tname  = tname,
+      idname = idname,
+      gname  = gname,
+      pl     = TRUE,
+      cores  = 2
+    )
   )
-  expect_silent(result)
 })

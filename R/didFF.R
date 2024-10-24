@@ -11,10 +11,6 @@
 #'  in the ``never-treated'' group.
 #' @param weightsname The name of the column containing the sampling weights.
 #'  If not set, all observations have the same weight (Default is NULL).
-# @param clustervars A vector of variables names to cluster on.  At most, there
-#  can be two variables (otherwise will throw an error) and one of these
-#  must be the same as idname which allows for clustering at the unit
-#  level. By default, we cluster at unit level.
 #' @param est_method the method to compute group-time average treatment effects.
 #'  The default is "dr" which uses the doubly robust
 #' approach in the `DRDID` package.  Other built-in methods
@@ -33,10 +29,8 @@
 #'  as repeated cross sections.
 #' @param allow_unbalanced_panel Whether or not function should
 #'  "balance" the panel with respect to time and id.  The default
-#'  values if `FALSE` which means that [att_gt()] will drop
+#'  value is `FALSE` which means that [att_gt()] will drop
 #'  all units where data is not observed in all periods.
-#'  The advantage of this is that the computations are faster
-#'  (sometimes substantially).
 #' @param nevertreated A scalar indicating never treated cohort. If any cohorts are equal to 0
 #'   and all time periods are above 0, then the 0 cohort is taken as never-treated by default;
 #'   otherwise the default is Inf.
@@ -68,6 +62,8 @@
 #' @param numSims Number of simulation draws to compute p-value for moment inequality
 #' test. Default `numSims=100000`.
 #' @param seed Starting seed for moment inequality test. Default is seed=0, set seed=NULL for random seed.
+#' @param lb_graph For display only; smallest bin to be plotted.
+#' @param ub_graph For display only; largest bin to be plotted.
 #' @param aggte_type Which type of (scalar) aggregated treatment effect parameter to compute.
 #' Options are "simple", "dynamic", "group", and "calendar". Default is `group`.
 #' @param balance_e If set (and if `aggte_type = "dynamic"`), it balances
@@ -82,12 +78,20 @@
 #' @param max_e For `aggte_type = "dynamic"`, this is the largest event time to compute
 #'  dynamic effects for.  By default, `max_e = Inf` so that effects at
 #'  all lfeasible event times are computed.
+#' @param distDD Estimate the distributional treatment effects (the distribution
+#'  of `Y(1)` minus the implied distribution of `Y(0)`, for the treated). Default is FALSE.
+#'  The function distDD is provided as a wrapper for `distDD=TRUE`.
 #' @param pl Whether or not to use parallel processing. Default is FALSE.
 #' @param cores The number of cores to use for parallel processing.
 #'  Only relevant if `pl = TRUE`.Default is `cores = parallel::detectCores()`.
-#' @return A list object containing the plot of the
-#'  implied density under the null, a table with the estimated and
-#'  implied densities, and the p-value for H0= Implied Density>=0.
+#' @return A list object containing: The plot of the
+#'  implied density under the null; a table with the estimated and
+#'  implied densities, and the p-value for H0= Implied Density>=0;
+#'  the average treatment effects.
+#' @references
+#' \cite{Roth, Jonathan and Sant'Anna, Pedro H. C. (2023),
+#' "When is Parallel Trends Sensitive to Functional Form?"
+#'  Econometrica, vol. 91 (2), pp. 737–747, \doi{10.3982/ECTA19402}}
 #' @export
 #'
 
@@ -110,18 +114,19 @@ didFF <-function(
     binpoints              = NULL,
     numSims                = 100000,
     seed                   = 0,
-    #lb_graph              = NULL,
-    #ub_graph              = NULL,
+    lb_graph               = NULL,
+    ub_graph               = NULL,
     aggte_type             = "group",
     balance_e              = NULL,
     min_e                  = -Inf,
     max_e                  = Inf,
+    distDD                 = FALSE,
     pl                     = FALSE,
     cores                  = parallel::detectCores()
 ) {
-  if ( !exists(".Random.seed") ) stats::runif(1)
-  rseed.cached <- .Random.seed
-  base::on.exit({.Random.seed <<- rseed.cached})
+  if ( !base::exists(".Random.seed", .GlobalEnv) ) stats::runif(1)
+  rseed.cached <- base::get(".Random.seed", .GlobalEnv)
+  base::on.exit({base::assign(".Random.seed", rseed.cached, .GlobalEnv)})
   #----------------------------------------------------------------------------
   # Store data as DF
   DF <- as.data.frame(data)
@@ -217,7 +222,7 @@ didFF <-function(
 
   # First do some sanity checks
   # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-  binsel <- (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
+  binsel <- if (distDD) TRUE else (DF[[tname]] < DF[[gname]]) | (DF[[gname]] == 0)
   yvals  <- NULL
   nvals  <- Inf
   if(base::is.null(nbins) & base::is.null(binpoints)){
@@ -241,11 +246,14 @@ didFF <-function(
     diffn  <- binpoints[base::length(binpoints)] - yrange[2]
     if( (diff1 > 0) & (base::abs(diff1) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(yrange[1], binpoints)
+      base::warning("binpoints don't cover the range of the outcome; padding at lower bound")
     }
     if( (diffn < 0) & (base::abs(diffn) > .Machine$double.eps^(1/2)) ){
       binpoints <- base::c(binpoints, yrange[2])
+      base::warning("binpoints don't cover the range of the outcome; padding at upper bound")
     }
-    if( (diff1 < 0) & (diffn > 0) ){
+    diffm <- base::sum(binpoints <= yrange[1])
+    if( (binpoints[diffm] <= yrange[1]) & (yrange[2] <= binpoints[diffm+1]) ){
       base::stop("Provided binpoints group all values into single bin.")
     }
   }
@@ -257,9 +265,10 @@ didFF <-function(
     base::warning("treating outcome as discrete; pass nbins or binpoints to modify this behavior")
   } else {
     bins <- base::cut(DF[binsel, yname],
-                      breaks = if (base::is.null(nbins)) binpoints else nbins,
+                      breaks         = if (base::is.null(nbins)) binpoints else nbins,
                       include.lowest = TRUE,
-                      labels = NULL)
+                      labels         = NULL,
+                      dig.lab        = 21)
   }
   bin[binsel] <- base::as.numeric(bins)
   bin2 <- base::levels(base::droplevels(bins))
@@ -284,12 +293,16 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Compute aggte from did package using each bin as outcome
-  run_bin <- function(j){
+  run_bin <- function(j, distDD=FALSE){
     outname <- base::paste0("outcome_bin", as.character(j))
 
     # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
-    DF[[outname]] <- -(bin == unique_bin[j])
-    DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
+    if ( distDD ) {
+      DF[[outname]] <- 1*(bin == unique_bin[j])
+    } else {
+      DF[[outname]] <- -1*(bin == unique_bin[j])
+      DF[[outname]] <- base::ifelse((0 < DF[[gname]]) & (DF[[gname]] <= DF[[tname]]), 0, DF[[outname]])
+    }
     out_bins <- base::suppressMessages(
       base::suppressWarnings(
         did::att_gt(
@@ -365,12 +378,12 @@ didFF <-function(
                                   "max_e",
                                   "aggte_type"),
                             envir=environment())
-    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin)
+    results <- parallel::parLapply(cl, 1:n_unique_bin, run_bin, distDD=distDD)
     # doParallel::registerDoParallel(cl)
     # results <- foreach::foreach(j=1:n_unique_bin) %dopar% run_bin(j)
     parallel::stopCluster(cl)
   } else {
-    results <- base::lapply(1:n_unique_bin, run_bin)
+    results <- base::lapply(1:n_unique_bin, run_bin, distDD=distDD)
   }
   point_estimates <- base::unlist(base::lapply(results, function(x) x$aggt_param$overall.att))
   inf_function    <- base::do.call(base::cbind, base::lapply(results, get_inf))
@@ -400,6 +413,7 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Compute the implied pdf for each bin
+
   implied_density <- point_estimates[keep_IF]
 
   #Asymptotic Variance-covariance matrix
@@ -410,6 +424,7 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # get the implied density table
+
   level = NULL
   implied_density_table <- base::data.frame(
     level = unique_level_orig,
@@ -419,81 +434,97 @@ didFF <-function(
 
   #----------------------------------------------------------------------------
   # Prepare data for plots
-  lb_graph <- base::min(unique_level_orig)
-  ub_graph <- base::max(unique_level_orig)
 
-  #Outcome = NULL
-  plotTable <- implied_density_table %>%
-    #dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
-    dplyr::mutate(Outcome = level) %>%
-    dplyr::mutate(
-      `Implied Density` = base::ifelse(implied_density < 0,
-                                       "Negative",
-                                       "Non-negative"))
-  #`Implied Density` <- NULL
-  basic_plot<- plotTable %>%
-    ggplot2::ggplot(ggplot2::aes(x=Outcome,
-                                 y = implied_density,
-                                 # fill = c)) +
-                                 fill = `Implied Density`)) +
-    ggplot2::geom_bar(stat = "identity") +
-    ggplot2::xlab("Outcome") +
-    ggplot2::ylab("Implied Density")
+  if ( !distDD ) {
+    if ( base::is.null(lb_graph) ) lb_graph <- base::min(unique_level_orig)
+    if ( base::is.null(ub_graph) ) ub_graph <- base::max(unique_level_orig)
 
-  #Format basic plot
-  implied_density_plot <- basic_plot +
-    ggthemes::theme_clean(base_size=12) +
-    ggplot2::scale_fill_brewer(palette = "Set1") +
-    ggplot2::theme(
-      # Background
-      plot.background = ggplot2::element_blank(),
-      # Format legend
-      legend.text = ggplot2::element_text(size=10),
-      legend.title = ggplot2::element_text(size=10),
-      legend.box.background = ggplot2::element_blank(),
-      legend.background = ggplot2::element_blank(),
+    #Outcome = NULL
+    plotTable <- implied_density_table %>%
+      dplyr::filter(lb_graph <= level, level <= ub_graph) %>%
+      dplyr::mutate(Outcome = level) %>%
+      dplyr::mutate(
+        `Implied Density` = base::ifelse(implied_density < 0,
+                                         "Negative",
+                                         "Non-negative"))
+    #`Implied Density` <- NULL
+    basic_plot<- plotTable %>%
+      ggplot2::ggplot(ggplot2::aes(x = .data$Outcome,
+                                   y = .data$implied_density,
+                                   # fill = c)) +
+                                   fill = .data$`Implied Density`)) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::xlab("Outcome") +
+      ggplot2::ylab("Implied Density")
 
-      # Set title and axis labels, and format these and tick marks
-      plot.title=ggplot2::element_text(size=13, vjust=1.25, hjust = 0.5),
-      axis.text.x=ggplot2::element_text(size=10),
-      axis.text.y=ggplot2::element_text(size=10),
-      axis.title.x=ggplot2::element_text(size=10, vjust=0),
-      axis.title.y=ggplot2::element_text(size=10, vjust=1.25),
+    #Format basic plot
+    implied_density_plot <- basic_plot +
+      ggthemes::theme_clean(base_size=12) +
+      ggplot2::scale_fill_brewer(palette = "Set1") +
+      ggplot2::theme(
+        # Background
+        plot.background = ggplot2::element_blank(),
+        # Format legend
+        legend.text = ggplot2::element_text(size=10),
+        legend.title = ggplot2::element_text(size=10),
+        legend.box.background = ggplot2::element_blank(),
+        legend.background = ggplot2::element_blank(),
 
-      # Plot margins
-      plot.margin = grid::unit(c(0.35, 0.2, 0.3, 0.35), "cm")
-    )
+        # Set title and axis labels, and format these and tick marks
+        plot.title=ggplot2::element_text(size=13, vjust=1.25, hjust = 0.5),
+        axis.text.x=ggplot2::element_text(size=10),
+        axis.text.y=ggplot2::element_text(size=10),
+        axis.title.x=ggplot2::element_text(size=10, vjust=0),
+        axis.title.y=ggplot2::element_text(size=10, vjust=1.25),
+
+        # Plot margins
+        plot.margin = grid::unit(c(0.35, 0.2, 0.3, 0.35), "cm")
+      )
+  }
 
   #----------------------------------------------------------------------------
   # Now, compute the moment inequality test
   # Get correlation matrix implied by sigmahat
-  Cormat <- stats::cov2cor(Sigmahat)
 
-  # set seed for draws
-  if (base::is.null(seed)) {
-    s <- base::Sys.time()
+  if ( !distDD ) {
+    Cormat <- stats::cov2cor(Sigmahat)
+    # set seed for draws
+    if (base::is.null(seed)) {
+      s <- base::Sys.time()
+    } else {
+      s <- seed
+    }
+    base::set.seed(s)
+
+    muhat_test <- -implied_density
+    muhat_max  <- base::max(muhat_test/base::sqrt(base::diag(Sigmahat)))
+    sims       <- MASS::mvrnorm(n = numSims, mu = rep(0, n_unique_bin), Sigma = Cormat)
+    sims_max   <- base::apply(X = sims, MARGIN = 1, FUN = max)
+    p_value    <- base::mean( sims_max >=  muhat_max)
+    plot       <- implied_density_plot
+
+    # To have the outcome interval in the table of implied density
+    implied_density_table$level <- bin2
+    base::colnames(att) <- bin2
+
+    didFF_out <- base::list(
+      plot  = plot,
+      table = implied_density_table,
+      pval  = p_value,
+      att   = att
+    )
   } else {
-    s <- seed
+    implied_dist_table <- base::data.frame(
+      level          = bin2,
+      test.estimates = point_estimates,
+      test.se        = base::sqrt(base::diag(Sigmahat))
+    )
+
+    didFF_out <- base::list(
+      table = implied_dist_table,
+      att   = att
+    )
   }
-  base::set.seed(s)
-
-  muhat_test <- -implied_density
-  muhat_max  <- base::max(muhat_test/base::sqrt(base::diag(Sigmahat)))
-  sims       <- MASS::mvrnorm(n = numSims, mu = rep(0, n_unique_bin), Sigma = Cormat)
-  sims_max   <- base::apply(X = sims, MARGIN = 1, FUN = max)
-  p_value    <- base::mean( sims_max >=  muhat_max)
-  plot       <- implied_density_plot
-
-  # To have the outcome interval in the table of implied density
-  implied_density_table$level <- bin2
-  colnames(att) <- bin2
-
-  didFF_out <- list(
-    plot  = plot,
-    table = implied_density_table,
-    pval  = p_value,
-    att   = att
-  )
 
   return(didFF_out)
 }

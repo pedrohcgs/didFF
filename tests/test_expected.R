@@ -26,7 +26,7 @@ tname                  = "year"
 idname                 = "countyreal"
 gname                  = "first.treat"
 xformla                = ~1
-xformla                = ~ lpop + I(lpop^2)
+#xformla                = ~ lpop + I(lpop^2)
 est_method             = "dr"
 control_group          = "nevertreated"
 nbins                  = 20
@@ -83,7 +83,8 @@ test_that("didFF returns same as manual run", {
   bins <- base::cut(data_filtered[[yname]],
                     breaks = if (base::is.null(nbins)) binpoints else nbins,
                     include.lowest = TRUE,
-                    labels = NULL)
+                    labels = NULL,
+                    dig.lab = 21)
   bin  <- base::as.numeric(bins)
   bin2 <- base::levels(base::droplevels(bins))
 
@@ -96,15 +97,16 @@ test_that("didFF returns same as manual run", {
     if(s==1) {
       data_filtered$lemp_1 <- -((data_filtered$lemp <= thresh[s]))
     }  else {
-      data_filtered$lemp_1 <- -((data_filtered$lemp <= thresh[s]) - (data_filtered$lemp < thresh[s-1]))
+      data_filtered$lemp_1 <- -((data_filtered$lemp <= thresh[s]) - (data_filtered$lemp <= thresh[s-1]))
     }
-    base::sum((data_filtered$lemp_1==-1) - (bin==s))
+    #base::sum((data_filtered$lemp_1==-1) - (bin==s))
     data_filtered$lemp_1 <- base::ifelse(
       data_filtered$first.treat <= data_filtered$year,
       0,
       data_filtered$lemp_1
     )
-    test_run_manual <- did::att_gt(
+    test_run_manual <- suppressMessages(
+      did::att_gt(
       data          = data_filtered,
       yname         = "lemp_1",
       tname         = tname,
@@ -112,12 +114,18 @@ test_that("didFF returns same as manual run", {
       gname         = gname,
       est_method    = est_method,
       xformla       = NULL,
-      control_group = control_group
+      control_group = control_group,
+      cband = FALSE,
+      base_period = "universal",
+      bstrap = FALSE
+      )
     )
-    manual_test[s,2] <- test_run_manual$att
-    manual_test[s,3] <- test_run_manual$se
+    manual_test[s,2] <- test_run_manual$att[2]
+    manual_test[s,3] <- test_run_manual$se[2]
   }
-  ttests = base::min(manual_test[,2]/manual_test[,3], na.rm = TRUE)
+  # ttests = base::min(manual_test[,2]/manual_test[,3], na.rm = TRUE)
+
+  expect_equal(results$table[,2], manual_test[,2], tol=.Machine$double.eps^(1/2))
 })
 
 #-----------------------------------------------------------------------------
@@ -174,8 +182,9 @@ test_that("didFF does not depend on outcome values in treated periods", {
   sub_bins <- base::cut(data_filtered[[yname]],
                         breaks = 20,
                         include.lowest = TRUE,
-                        labels = NULL)
-  sub_binpoints <- base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", bins)))
+                        labels = NULL,
+                        dig.lab = 21)
+  sub_binpoints <- base::unique(base::as.numeric(base::sub("[^,]*,([^]]*)\\]", "\\1", sub_bins)))
 
   df1 <- data_filtered
   df2 <- subset(data_filtered, (first.treat != year) | (lpop > 5))
@@ -183,7 +192,8 @@ test_that("didFF does not depend on outcome values in treated periods", {
   df3[df3$first.treat == df3$year, yname] <- 0
 
   for ( meth in c("dr", "reg", "ipw") ) {
-    resultsA <- didFF(
+    resultsA <- base::suppressWarnings(
+      didFF(
       data       = df1,
       yname      = yname,
       tname      = tname,
@@ -192,8 +202,10 @@ test_that("didFF does not depend on outcome values in treated periods", {
       est_method = meth,
       control_group = c("nevertreated", "notyettreated"),
       binpoints  = binpoints
+      )
     )
-    resultsB <- didFF(
+    resultsB <- base::suppressWarnings(
+      didFF(
       data       = df2,
       yname      = yname,
       tname      = tname,
@@ -203,8 +215,10 @@ test_that("didFF does not depend on outcome values in treated periods", {
       binpoints  = binpoints,
       control_group = "notyettreated",
       allow_unbalanced_panel=TRUE
+      )
     )
-    resultsC <- didFF(
+    resultsC <- base::suppressWarnings(
+      didFF(
       data       = df3,
       yname      = yname,
       tname      = tname,
@@ -213,6 +227,7 @@ test_that("didFF does not depend on outcome values in treated periods", {
       est_method = meth,
       binpoints  = binpoints,
       control_group = "nevertreated"
+      )
     )
 
     denA <- resultsA$table$implied_density
@@ -230,15 +245,19 @@ test_that("didFF does not depend on outcome values in treated periods", {
 # this is all hard-coded
 test_that("didFF recovers exact theoretical densities in discrete case", {
   for (i in 1:10) {
-    th  <- round(runif(1) * 0.6 + 0.2, 2)
+    th  <- round(runif(1) * 0.5 + 0.4, 2)
     Dt  <- 1:10
     Dd  <- 1:10
-    gt0 <- runif(length(Dt)) * 0.5 + 0.5
-    gt1 <- runif(length(Dt)) * 0.5 + 0.5
+    # gt0 <- runif(length(Dt)) * 0.5 + 0.5
+    # gt1 <- runif(length(Dt)) * 0.5 + 0.5
+    gt0 <- runif(length(Dt)) * 0.3 + 0.3
+    gt1 <- runif(length(Dt)) * 0.7 + 0.7
     gt0 <- round(gt0/sum(gt0), 2)
     gt1 <- round(gt1/sum(gt1), 2)
-    hd0 <- runif(length(Dd))
-    hd1 <- runif(length(Dd))
+    # hd0 <- runif(length(Dd))
+    # hd1 <- runif(length(Dd))
+    hd0 <- runif(length(Dt)) * 1.7 + 0.7
+    hd1 <- runif(length(Dt)) * 1.3 + 0.3
     hd0 <- round(hd0/sum(hd0), 2)
     hd1 <- round(hd1/sum(hd1), 2)
     p00 <- round(th * gt0 + (1-th) * hd0, 2)
@@ -297,12 +316,18 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     Fy[ti == 0 & di == 0] <- c(rep(Dt, gr0), rep(Dd, hr0))
     Fy[ti == 0 & di == 1] <- c(rep(Dt, gr0), rep(Dd, hr1))
     Fy[ti == 1 & di == 0] <- c(rep(Dt, gr1), rep(Dd, hr0))
-    Fy[ti == 1 & di == 1] <- c(rep(Dt, gr1), rep(Dd, hr1))
+    if ( runif(1) > 0.5 ) {
+        Fy[ti == 1 & di == 1] <- c(rep(Dt, gr1), rep(Dd, hr1)) + 5
+        pad <- TRUE
+    } else {
+        Fy[ti == 1 & di == 1] <- sample(1:10, size=sum(ti == 1 & di == 1), replace=T, prob=1:10)
+        pad <- FALSE
+    }
 
     di[di == 0] <- Inf
     DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
-    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = c(0, sort(unique(Fy))))
-    expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
+    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g", binpoints = 0:10)
+   expect_equal(res$table$implied_density, p11, tol=.Machine$double.eps^(1/2))
 
     sel0 <- ti == 0 & di == Inf
     sel1 <- ti == 0 & di == 1
@@ -319,7 +344,35 @@ test_that("didFF recovers exact theoretical densities in discrete case", {
     dfM[is.na(dfM[["F1"]]), "F1"] <- 0
     dfM[is.na(dfM[["F2"]]), "F2"] <- 0
     dfM <- dfM[order(dfM$y),]
-    expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+   expect_equal(res$table$implied_density, dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+
+    F_t1_d1_implied <- res$table$implied_density
+    F_t1_d1_actual  <- prop.table(table(Fy[ti == 1 & di == 1]))
+    if ( runif(1) > 0.5 ) {
+        res <- didFF(data             = DF,
+                     yname            = "y",
+                     tname            = "t",
+                     idname           = "i",
+                     gname            = "g",
+                     distDD           = TRUE,
+                     binpoints        = 0:15)
+    } else {
+        res <- distDD(data             = DF,
+                      yname            = "y",
+                      tname            = "t",
+                      idname           = "i",
+                      gname            = "g",
+                      binpoints        = 0:15)
+    }
+    if ( pad ) {
+     expect_equal(as.vector(c(rep(0, 5), F_t1_d1_actual) - c(F_t1_d1_implied, rep(0, 5))),
+                  res$table$test.estimates,
+                  tol=.Machine$double.eps^(1/2))
+    } else {
+     expect_equal(as.vector(F_t1_d1_actual - F_t1_d1_implied),
+                  res$table$test.estimates,
+                  tol=.Machine$double.eps^(1/2))
+    }
   }
 })
 
@@ -414,7 +467,13 @@ test_that("didFF recovers exact theoretical densities with multiple times/cohort
 
     di[di == 0] <- Inf
     DF  <- data.frame(y=Fy, t=ti, i=id, g=di)
-    res <- didFF(data = DF, yname = "y", tname = "t", idname = "i", gname = "g")
+    res <- base::suppressWarnings(
+      didFF(data = DF,
+            yname = "y",
+            tname = "t",
+            idname = "i",
+            gname = "g")
+    )
 
     # ATT = 0 if not yet treated (cohort < t)
     for (j in 2:kk) {
@@ -441,7 +500,10 @@ test_that("didFF recovers exact theoretical densities with multiple times/cohort
         dfM[is.na(dfM[["F1"]]), "F1"] <- 0
         dfM[is.na(dfM[["F2"]]), "F2"] <- 0
         dfM <- dfM[order(dfM$y),]
-        expect_equal(unname(res$att[(gg - 1)*kk+tt+1,]), dfM$F1 + dfM$F2 - dfM$F0, tol=.Machine$double.eps^(1/2))
+
+        expect_equal(unname(res$att[(gg - 1)*kk+tt+1,]),
+                     dfM$F1 + dfM$F2 - dfM$F0,
+                     tol=.Machine$double.eps^(1/2))
       }
     }
   }
