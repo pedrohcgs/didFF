@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# didFF
+# Difference-in-Differences and Functional Form
 
 <!-- badges: start -->
 
@@ -120,7 +120,6 @@ test_2007_2015 <- didFF(
 #> Warning in didFF(data = mw_df_2007_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
 #> the g=0 cohort is never-treated.
-#> You have an unbalanced panel. Proceeding as such.
 
 test_2007_2015$plot
 ```
@@ -188,7 +187,6 @@ test_2010_2015 <- didFF(
 #> Warning in didFF(data = mw_df_2010_2015, idname = "statenum", yname =
 #> "wagebins", : You have observations with g=0 and all time periods t>0; assuming
 #> the g=0 cohort is never-treated.
-#> You have an unbalanced panel. Proceeding as such.
 
 test_2010_2015$plot
 ```
@@ -197,7 +195,7 @@ test_2010_2015$plot
 
 ``` r
 test_2010_2015$pval
-#> [1] 0.33275
+#> [1] 0.3317
 ```
 
 ## Distributional Treatement Effects
@@ -221,7 +219,6 @@ dist_2007_2015 <- distDD(
 )
 #> Warning in didFF(..., distDD = TRUE): You have observations with g=0 and all
 #> time periods t>0; assuming the g=0 cohort is never-treated.
-#> You have an unbalanced panel. Proceeding as such.
 
 head(dist_2007_2015$table)
 #>        level test.estimates      test.se

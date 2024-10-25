@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 
 ```
 
-# didFF
+# Difference-in-Differences and Functional Form
 
 <!-- badges: start -->
 ![Unit and build tests](https://github.com/pedrohcgs/didFF/actions/workflows/tests.yml/badge.svg)

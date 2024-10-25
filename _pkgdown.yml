@@ -1,0 +1,43 @@
+url: https://psantanna.com/didFF
+destination: docs
+template:
+  params:
+    bootswatch: flatly
+  opengraph:
+    twitter:
+      creator: '@pedrohcgs'
+      card: summary_large_image
+      image: man/figures/logo.png
+authors:
+  Pedro H. C. Sant'Anna:
+    href: https://psantanna.com
+navbar:
+  title: didFF
+  structure:
+    left:
+    - home
+    - intro
+    - reference
+    - articles
+    - tutorials
+    - news
+    right:
+    - github
+    - twitter
+  components:
+    home:
+      icon: fas fa-home fa-la
+      href: index.html
+    reference:
+      text: Functions
+      href: reference/index.html
+    news:
+      text: News
+      href: news/index.html
+    github:
+      icon: fab fa-github fa-la
+      href: https://github.com/pedrohcgs/didFF/
+    twitter:
+      icon: fab fa-twitter fa-lg
+      href: http://twitter.com/pedrohcgs
+
