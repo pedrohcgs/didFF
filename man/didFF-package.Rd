@@ -19,6 +19,7 @@ Useful links:
 \itemize{
   \item \url{https://psantanna.com/didFF/}
   \item \url{https://github.com/pedrohcgs/didFF/}
+  \item \url{http://psantanna.com/didFF/}
 }
 
 }
@@ -27,7 +28,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Jon Roth \email{jonathndr@gmail.com}
+  \item Jonathan Roth \email{jonathndr@gmail.com}
 }
 
 }

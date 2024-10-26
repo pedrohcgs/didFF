@@ -11,6 +11,8 @@ template:
 authors:
   Pedro H. C. Sant'Anna:
     href: https://psantanna.com
+  Jonathan Roth:
+    href: https://jonathandroth.com
 navbar:
   title: didFF
   structure:
@@ -31,9 +33,6 @@ navbar:
     reference:
       text: Functions
       href: reference/index.html
-    news:
-      text: News
-      href: news/index.html
     github:
       icon: fab fa-github fa-la
       href: https://github.com/pedrohcgs/didFF/

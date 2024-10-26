@@ -1,7 +1,7 @@
 Package: didFF
 Title: Test if Parallel Trends is Sensitive to Functional Form
-Version: 0.0.1
-Authors@R: c(person("Jon", "Roth", , "jonathndr@gmail.com", role = c("aut")), person("Pedro H. C.", "Sant'Anna", email="pedrohcgs@gmail.com", role = c("aut", "cre")))
+Version: 0.1.0
+Authors@R: c(person("Jonathan", "Roth", , "jonathndr@gmail.com", role = c("aut")), person("Pedro H. C.", "Sant'Anna", email="pedrohcgs@gmail.com", role = c("aut", "cre")))
 URL: https://psantanna.com/didFF/, https://github.com/pedrohcgs/didFF/, http://psantanna.com/didFF/
 Description: Difference-in-Differences (DiD) estimators rely on the validity of a parallel trends assumption. In practice, it often may not be clear from theory that parallel trends should hold for a particular choice of functional form. For example, a researcher may be interested in the average treatment effect on the treated (ATT) in levels for a particular policy, but it may not be obvious that the variation in the policy generates parallel trends specifically in levels rather than in logs or some other transformation. This package contains tools for assessing if parallel trends is insensitive to functional form using the methods developed in Roth and Sant'Anna (2023) <doi:10.3982/ECTA19402>.  The package accommodates setups with multiple time periods, variation in treatment timing, and allow for covariates. We provide estimates, plots, and p-values for the implied density of the untreated potential outcomes under the null-hypothesis that paralell trends assumptions is not sensitive to functional form of the outcome. 
 License: MIT + file LICENSE
