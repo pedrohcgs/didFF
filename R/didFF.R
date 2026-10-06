@@ -514,10 +514,14 @@ didFF <-function(
       att   = att
     )
   } else {
+    # Sigmahat only covers the bins kept above; a dropped bin has no
+    # standard error to report.
+    test_se <- base::rep(NA_real_, base::length(point_estimates))
+    test_se[keep_IF] <- base::sqrt(base::diag(Sigmahat))
     implied_dist_table <- base::data.frame(
       level          = bin2,
       test.estimates = point_estimates,
-      test.se        = base::sqrt(base::diag(Sigmahat))
+      test.se        = test_se
     )
 
     didFF_out <- base::list(
