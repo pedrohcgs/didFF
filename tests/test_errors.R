@@ -171,7 +171,7 @@ test_that("didFF stops if invalid formula.", {
       idname  = idname,
       gname   = gname,
       xformla = data_filtered[["lpop"]]
-    ), "invalid formula"
+    ), "invalid formula|xformla must be NULL or a formula"
   )
   expect_error(
     didFF(
@@ -181,7 +181,7 @@ test_that("didFF stops if invalid formula.", {
       idname  = idname,
       gname   = gname,
       xformla = ~ `not in data`
-    ), "object 'not in data' not found"
+    ), "object 'not in data' not found|variables are not in data"
   )
 })
 

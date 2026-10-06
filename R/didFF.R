@@ -147,6 +147,10 @@ didFF <-function(
   if(!base::is.null(nbins) & !base::is.null(binpoints)){
     base::stop("Can only specify one of nbins or binpoints.")
   }
+  # The default is the vector c("nevertreated", "notyettreated"), with the
+  # first element as the documented default. did (>= 2.5.0) requires a scalar
+  # and no longer picks the first element itself.
+  control_group <- control_group[1]
   possible_aggte_types <- c("simple", "dynamic", "group", "calendar")
   if((aggte_type %in% possible_aggte_types) == FALSE){
     base::stop("aggte_type must be equal to `simple`, `dynamic`, `group`, or `calendar`.")
@@ -206,19 +210,23 @@ didFF <-function(
   mask <- base::min(DF[[gname]], DF[[tname]])
   DF[[gname]] <- DF[[gname]] - mask + 1
   DF[[tname]] <- DF[[tname]] - mask + 1
-  DF <- did::pre_process_did(yname                  = yname,
-                             tname                  = tname,
-                             idname                 = idname,
-                             gname                  = gname,
-                             xformla                = xformla,
-                             data                   = DF,
-                             panel                  = panel,
-                             allow_unbalanced_panel = allow_unbalanced_panel,
-                             control_group          = control_group,
-                             anticipation           = anticipation,
-                             weightsname            = weightsname,
-                             est_method             = est_method,
-                             base_period            = "universal")$data
+  # did (>= 2.5.0) also reports how it resolved allow_unbalanced_panel as a
+  # message; the warnings are the part meant to reach the user.
+  DF <- base::suppressMessages(
+    did::pre_process_did(yname                  = yname,
+                         tname                  = tname,
+                         idname                 = idname,
+                         gname                  = gname,
+                         xformla                = xformla,
+                         data                   = DF,
+                         panel                  = panel,
+                         allow_unbalanced_panel = allow_unbalanced_panel,
+                         control_group          = control_group,
+                         anticipation           = anticipation,
+                         weightsname            = weightsname,
+                         est_method             = est_method,
+                         base_period            = "universal")$data
+  )
 
   # First do some sanity checks
   # NB: As of 2023-06, did::pre_process_did re-codes nevertreated as 0s
